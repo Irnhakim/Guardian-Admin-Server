@@ -9,7 +9,7 @@ import { useSocket } from "@/hooks/useSocket";
 import {
   Battery, Wifi, WifiOff, Smartphone, MapPin,
   Clock, BarChart2, Shield, ChevronLeft,
-  Thermometer, Navigation, RefreshCw,
+  Thermometer, Navigation, RefreshCw, Bell,
 } from "lucide-react";
 import Link from "next/link";
 import { formatDistanceToNow } from "date-fns";
@@ -25,7 +25,28 @@ function formatMs(ms: number) {
   return h > 0 ? `${h}h ${m}m` : `${m}m`;
 }
 
-const tabs = ["Overview", "Apps", "Location", "Usage", "Security"] as const;
+const getInitials = (name: string) => {
+  return name ? name.substring(0, 2).toUpperCase() : "AP";
+};
+
+const getHashColor = (str: string) => {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = str.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  const h = Math.abs(hash % 360);
+  return `hsl(${h}, 70%, 45%)`;
+};
+
+const formatTime = (dateStr: string) => {
+  try {
+    return formatDistanceToNow(new Date(dateStr), { addSuffix: true });
+  } catch (e) {
+    return "just now";
+  }
+};
+
+const tabs = ["Overview", "Apps", "Notifications", "Location", "Usage", "Security"] as const;
 type Tab = (typeof tabs)[number];
 
 export default function DeviceDetailPage() {
@@ -34,6 +55,7 @@ export default function DeviceDetailPage() {
   const [activeTab, setActiveTab] = useState<Tab>("Overview");
   const [liveBattery, setLiveBattery] = useState<any>(null);
   const [liveLocation, setLiveLocation] = useState<any>(null);
+  const [searchTerm, setSearchTerm] = useState("");
 
   const { data: device, refetch: refetchDevice } = useQuery({
     queryKey: ["device", id],
@@ -64,6 +86,12 @@ export default function DeviceDetailPage() {
     enabled: !!device && activeTab === "Usage",
   });
 
+  const { data: notifications = [], refetch: refetchNotifications } = useQuery({
+    queryKey: ["notifications", id],
+    queryFn: () => api.get(`/devices/${device?.deviceId}/notifications`).then((r) => r.data),
+    enabled: !!device && activeTab === "Notifications",
+  });
+
   const [isSyncing, setIsSyncing] = useState(false);
 
   useEffect(() => {
@@ -78,13 +106,19 @@ export default function DeviceDetailPage() {
     socket.on("usage:synced", () => {
       refetchUsage();
     });
+    socket.on("notification:received", (payload: { deviceId: string; notification: any }) => {
+      if (payload.deviceId === id) {
+        refetchNotifications();
+      }
+    });
     return () => {
       socket.off("battery:update");
       socket.off("location:update");
       socket.off("apps:synced");
       socket.off("usage:synced");
+      socket.off("notification:received");
     };
-  }, [socket, id, refetchApps, refetchDevice, refetchUsage]);
+  }, [socket, id, refetchApps, refetchDevice, refetchUsage, refetchNotifications]);
 
   const handleForceSync = () => {
     if (!socket || !device) return;
@@ -246,6 +280,113 @@ export default function DeviceDetailPage() {
                 No apps synced yet
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* ── NOTIFICATIONS TAB ─────────────────────────── */}
+      {activeTab === "Notifications" && (
+        <div className="space-y-4">
+          <div className="flex gap-4 items-center">
+            <input
+              type="text"
+              placeholder="Search notifications by app, title, or message..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="px-4 py-2 rounded-lg text-sm w-full md:w-96 outline-none border transition-all"
+              style={{
+                background: "var(--bg-card)",
+                borderColor: "var(--border)",
+                color: "var(--text-primary)",
+              }}
+            />
+          </div>
+
+          <div className="glass-card overflow-hidden">
+            <div className="p-4 border-b flex items-center justify-between" style={{ borderColor: "var(--border)" }}>
+              <p className="font-medium" style={{ color: "var(--text-primary)" }}>
+                Intercepted Notifications ({
+                  notifications.filter((notif: any) => {
+                    const term = searchTerm.toLowerCase();
+                    return (
+                      notif.appName?.toLowerCase().includes(term) ||
+                      notif.packageName?.toLowerCase().includes(term) ||
+                      notif.title?.toLowerCase().includes(term) ||
+                      notif.text?.toLowerCase().includes(term)
+                    );
+                  }).length
+                })
+              </p>
+            </div>
+            <div className="divide-y" style={{ borderColor: "var(--border)" }}>
+              {notifications
+                .filter((notif: any) => {
+                  const term = searchTerm.toLowerCase();
+                  return (
+                    notif.appName?.toLowerCase().includes(term) ||
+                    notif.packageName?.toLowerCase().includes(term) ||
+                    notif.title?.toLowerCase().includes(term) ||
+                    notif.text?.toLowerCase().includes(term)
+                  );
+                })
+                .map((notif: any) => {
+                  const appColor = getHashColor(notif.appName || notif.packageName || "App");
+                  return (
+                    <div key={notif.id} className="flex items-start gap-4 px-4 py-4 hover:bg-[rgba(255,255,255,0.02)] transition-colors">
+                      <div
+                        className="w-10 h-10 rounded-xl flex items-center justify-center font-bold text-white shrink-0 text-sm shadow-md"
+                        style={{ backgroundColor: appColor }}
+                      >
+                        {getInitials(notif.appName || notif.packageName || "App")}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>
+                              {notif.appName || "Unknown App"}
+                            </span>
+                            <span className="text-xs" style={{ color: "var(--text-muted)" }}>
+                              {notif.packageName}
+                            </span>
+                            {notif.category && (
+                              <span className="badge badge-blue capitalize">{notif.category}</span>
+                            )}
+                          </div>
+                          <span className="text-xs shrink-0" style={{ color: "var(--text-muted)" }}>
+                            {formatTime(notif.receivedAt)}
+                          </span>
+                        </div>
+                        <div className="mt-1">
+                          {notif.title && (
+                            <p className="text-sm font-medium" style={{ color: "var(--text-primary)" }}>
+                              {notif.title}
+                            </p>
+                          )}
+                          {notif.text && (
+                            <p className="text-sm mt-0.5" style={{ color: "var(--text-secondary)" }}>
+                              {notif.text}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              {notifications.filter((notif: any) => {
+                const term = searchTerm.toLowerCase();
+                return (
+                  notif.appName?.toLowerCase().includes(term) ||
+                  notif.packageName?.toLowerCase().includes(term) ||
+                  notif.title?.toLowerCase().includes(term) ||
+                  notif.text?.toLowerCase().includes(term)
+                );
+              }).length === 0 && (
+                <div className="p-12 text-center" style={{ color: "var(--text-muted)" }}>
+                  <Bell size={36} className="mx-auto mb-2 opacity-50" />
+                  <p>No notifications matched search or intercepted yet</p>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}

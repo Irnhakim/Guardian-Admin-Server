@@ -35,6 +35,11 @@ export declare class GuardianGateway implements OnGatewayConnection, OnGatewayDi
         parentId: string;
         data: any;
     }): void;
+    handleNotificationReceived(payload: {
+        deviceId: string;
+        parentId: string;
+        data: any;
+    }): void;
     handleAppsSync(payload: {
         deviceId: string;
         parentId: string;

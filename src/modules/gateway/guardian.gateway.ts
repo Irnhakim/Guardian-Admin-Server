@@ -163,6 +163,14 @@ export class GuardianGateway
     });
   }
 
+  @OnEvent('notification.received')
+  handleNotificationReceived(payload: { deviceId: string; parentId: string; data: any }) {
+    this.server.to(`parent:${payload.parentId}`).emit('notification:received', {
+      deviceId: payload.deviceId,
+      notification: payload.data,
+    });
+  }
+
   @OnEvent('apps.synced')
   handleAppsSync(payload: { deviceId: string; parentId: string; count: number }) {
     this.server.to(`parent:${payload.parentId}`).emit('apps:synced', {

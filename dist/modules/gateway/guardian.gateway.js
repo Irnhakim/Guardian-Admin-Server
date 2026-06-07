@@ -119,6 +119,12 @@ let GuardianGateway = GuardianGateway_1 = class GuardianGateway {
             location: payload.data,
         });
     }
+    handleNotificationReceived(payload) {
+        this.server.to(`parent:${payload.parentId}`).emit('notification:received', {
+            deviceId: payload.deviceId,
+            notification: payload.data,
+        });
+    }
     handleAppsSync(payload) {
         this.server.to(`parent:${payload.parentId}`).emit('apps:synced', {
             deviceId: payload.deviceId,
@@ -180,6 +186,12 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", void 0)
 ], GuardianGateway.prototype, "handleLocationUpdate", null);
+__decorate([
+    (0, event_emitter_1.OnEvent)('notification.received'),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", void 0)
+], GuardianGateway.prototype, "handleNotificationReceived", null);
 __decorate([
     (0, event_emitter_1.OnEvent)('apps.synced'),
     __metadata("design:type", Function),
