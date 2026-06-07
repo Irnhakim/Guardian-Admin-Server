@@ -8,38 +8,47 @@ export declare class DevicesService {
     constructor(prisma: PrismaService, eventEmitter: EventEmitter2);
     register(dto: RegisterDeviceDto, parentId: string): Promise<{
         id: string;
-        updatedAt: Date;
         deviceId: string;
         deviceName: string;
         brand: string;
         model: string;
         androidVersion: string;
         securityPatch: string | null;
-        fcmToken: string | null;
         parentId: string;
         status: import("@prisma/client").$Enums.DeviceStatus;
         lastSeen: Date | null;
         registeredAt: Date;
+        updatedAt: Date;
+        fcmToken: string | null;
     }>;
     findAll(parentId: string): Promise<({
+        batteryLogs: {
+            id: string;
+            deviceId: string;
+            timestamp: Date;
+            level: number;
+            isCharging: boolean;
+            temperature: number | null;
+            voltage: number | null;
+        }[];
         _count: {
             installedApps: number;
             alerts: number;
         };
     } & {
         id: string;
-        updatedAt: Date;
         deviceId: string;
         deviceName: string;
         brand: string;
         model: string;
         androidVersion: string;
         securityPatch: string | null;
-        fcmToken: string | null;
         parentId: string;
         status: import("@prisma/client").$Enums.DeviceStatus;
         lastSeen: Date | null;
         registeredAt: Date;
+        updatedAt: Date;
+        fcmToken: string | null;
     })[]>;
     findOne(id: string, parentId: string): Promise<{
         _count: {
@@ -48,78 +57,78 @@ export declare class DevicesService {
         };
     } & {
         id: string;
-        updatedAt: Date;
         deviceId: string;
         deviceName: string;
         brand: string;
         model: string;
         androidVersion: string;
         securityPatch: string | null;
-        fcmToken: string | null;
         parentId: string;
         status: import("@prisma/client").$Enums.DeviceStatus;
         lastSeen: Date | null;
         registeredAt: Date;
+        updatedAt: Date;
+        fcmToken: string | null;
     }>;
     findByDeviceId(deviceId: string): Promise<{
         id: string;
-        updatedAt: Date;
         deviceId: string;
         deviceName: string;
         brand: string;
         model: string;
         androidVersion: string;
         securityPatch: string | null;
-        fcmToken: string | null;
         parentId: string;
         status: import("@prisma/client").$Enums.DeviceStatus;
         lastSeen: Date | null;
         registeredAt: Date;
+        updatedAt: Date;
+        fcmToken: string | null;
     }>;
     update(id: string, parentId: string, dto: UpdateDeviceDto): Promise<{
         id: string;
-        updatedAt: Date;
         deviceId: string;
         deviceName: string;
         brand: string;
         model: string;
         androidVersion: string;
         securityPatch: string | null;
-        fcmToken: string | null;
         parentId: string;
         status: import("@prisma/client").$Enums.DeviceStatus;
         lastSeen: Date | null;
         registeredAt: Date;
+        updatedAt: Date;
+        fcmToken: string | null;
     }>;
     updateStatus(deviceId: string, status: DeviceStatus): Promise<{
         id: string;
-        updatedAt: Date;
         deviceId: string;
         deviceName: string;
         brand: string;
         model: string;
         androidVersion: string;
         securityPatch: string | null;
-        fcmToken: string | null;
         parentId: string;
         status: import("@prisma/client").$Enums.DeviceStatus;
         lastSeen: Date | null;
         registeredAt: Date;
+        updatedAt: Date;
+        fcmToken: string | null;
     }>;
     heartbeat(deviceId: string): Promise<{
         id: string;
-        updatedAt: Date;
         deviceId: string;
         deviceName: string;
         brand: string;
         model: string;
         androidVersion: string;
         securityPatch: string | null;
-        fcmToken: string | null;
         parentId: string;
         status: import("@prisma/client").$Enums.DeviceStatus;
         lastSeen: Date | null;
         registeredAt: Date;
+        updatedAt: Date;
+        fcmToken: string | null;
     }>;
     delete(id: string, parentId: string): Promise<{
         message: string;

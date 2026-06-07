@@ -35,7 +35,7 @@ export default function DeviceDetailPage() {
   const [liveBattery, setLiveBattery] = useState<any>(null);
   const [liveLocation, setLiveLocation] = useState<any>(null);
 
-  const { data: device } = useQuery({
+  const { data: device, refetch: refetchDevice } = useQuery({
     queryKey: ["device", id],
     queryFn: () => api.get(`/devices/${id}`).then((r) => r.data),
   });
@@ -52,13 +52,13 @@ export default function DeviceDetailPage() {
     enabled: !!device,
   });
 
-  const { data: apps = [] } = useQuery({
+  const { data: apps = [], refetch: refetchApps } = useQuery({
     queryKey: ["apps", id],
     queryFn: () => api.get(`/devices/${device?.deviceId}/apps`).then((r) => r.data),
     enabled: !!device && activeTab === "Apps",
   });
 
-  const { data: usage = [] } = useQuery({
+  const { data: usage = [], refetch: refetchUsage } = useQuery({
     queryKey: ["usage", id],
     queryFn: () => api.get(`/devices/${device?.deviceId}/usage`).then((r) => r.data),
     enabled: !!device && activeTab === "Usage",
@@ -71,11 +71,20 @@ export default function DeviceDetailPage() {
     socket.emit("subscribe:device", { deviceId: id });
     socket.on("battery:update", ({ battery }) => setLiveBattery(battery));
     socket.on("location:update", ({ location }) => setLiveLocation(location));
+    socket.on("apps:synced", () => {
+      refetchApps();
+      refetchDevice();
+    });
+    socket.on("usage:synced", () => {
+      refetchUsage();
+    });
     return () => {
       socket.off("battery:update");
       socket.off("location:update");
+      socket.off("apps:synced");
+      socket.off("usage:synced");
     };
-  }, [socket, id]);
+  }, [socket, id, refetchApps, refetchDevice, refetchUsage]);
 
   const handleForceSync = () => {
     if (!socket || !device) return;

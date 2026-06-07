@@ -118,7 +118,7 @@ export default function DashboardPage() {
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
             {devices.map((device: any) => {
               const live = liveData[device.id] || {};
-              const battery = live.battery || null;
+              const battery = live.battery || device.batteryLogs?.[0] || null;
               const isOnline = device.status === "ONLINE";
 
               return (

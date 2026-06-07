@@ -80,6 +80,10 @@ export class DevicesService {
             alerts: { where: { isRead: false } },
           },
         },
+        batteryLogs: {
+          orderBy: { timestamp: 'desc' },
+          take: 1,
+        },
       },
       orderBy: { lastSeen: 'desc' },
     });

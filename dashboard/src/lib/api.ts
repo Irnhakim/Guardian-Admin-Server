@@ -24,6 +24,7 @@ api.interceptors.response.use(
     if (error.response?.status === 401 && typeof window !== "undefined") {
       localStorage.removeItem("guardian_access_token");
       localStorage.removeItem("guardian_refresh_token");
+      localStorage.removeItem("guardian-auth");
       window.location.href = "/login";
     }
     return Promise.reject(error);
