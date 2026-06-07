@@ -1,0 +1,59 @@
+# Guardian — Docker Compose
+# 4 services: backend, dashboard, postgres, redis
+# No Nginx — Cloudflare Tunnel handles routing directly to each port
+# Optimized for 2GB RAM (CasaOS / STB)
+
+services:
+
+  # ── PostgreSQL ─────────────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    container_name: guardian_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: guardian_db
+      POSTGRES_USER: guardian
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-guardian_pass}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5435:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U guardian -d guardian_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    # RAM limit: ~150MB
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+
+  # ── Redis ──────────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: guardian_redis
+    restart: unless-stopped
+    command: redis-server --maxmemory 128mb --maxmemory-policy allkeys-lru --save ""
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    # RAM limit: ~128MB
+    deploy:
+      resources:
+        limits:
+          memory: 192M
+
+
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  default:
+    name: guardian_network

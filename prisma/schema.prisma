@@ -1,0 +1,339 @@
+// Guardian Parental Control System - Prisma Schema
+// Production-ready, scalable schema for MVP v1 + future phases
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================
+// AUTHENTICATION & USERS
+// ============================================================
+
+enum Role {
+  PARENT
+  CHILD
+  ADMIN
+}
+
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  password     String
+  name         String
+  role         Role     @default(PARENT)
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Relations
+  devices      Device[]     @relation("ParentDevices")
+  refreshTokens RefreshToken[]
+  auditLogs    AuditLog[]
+
+  @@map("users")
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  userId    String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("refresh_tokens")
+}
+
+// ============================================================
+// DEVICES
+// ============================================================
+
+enum DeviceStatus {
+  ONLINE
+  OFFLINE
+}
+
+model Device {
+  id             String       @id @default(uuid())
+  deviceId       String       @unique // UUID generated on device
+  deviceName     String
+  brand          String
+  model          String
+  androidVersion String
+  securityPatch  String?
+  parentId       String
+  status         DeviceStatus @default(OFFLINE)
+  lastSeen       DateTime?
+  registeredAt   DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  fcmToken       String?      // Firebase Cloud Messaging token
+
+  // Relations
+  parent            User              @relation("ParentDevices", fields: [parentId], references: [id])
+  batteryLogs       BatteryLog[]
+  locations         Location[]
+  installedApps     InstalledApp[]
+  appUsages         AppUsage[]
+  notifications     AppNotification[]
+  rules             Rule[]
+  alerts            Alert[]
+  vpnLogs           VpnLog[]
+  geofences         Geofence[]
+
+  @@map("devices")
+}
+
+// ============================================================
+// BATTERY MONITORING
+// ============================================================
+
+model BatteryLog {
+  id          String   @id @default(uuid())
+  deviceId    String
+  level       Int      // 0-100
+  isCharging  Boolean
+  temperature Float?   // Celsius
+  voltage     Int?     // mV
+  timestamp   DateTime @default(now())
+
+  device Device @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+
+  @@index([deviceId, timestamp])
+  @@map("battery_logs")
+}
+
+// ============================================================
+// LOCATION TRACKING
+// ============================================================
+
+enum LocationMode {
+  NORMAL   // 15 min interval
+  TRACKING // 1 min interval
+}
+
+model Location {
+  id        String   @id @default(uuid())
+  deviceId  String
+  latitude  Float
+  longitude Float
+  accuracy  Float?   // meters
+  altitude  Float?   // meters
+  speed     Float?   // m/s
+  bearing   Float?   // degrees
+  provider  String?  // gps, network, fused
+  timestamp DateTime @default(now())
+
+  device Device @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+
+  @@index([deviceId, timestamp])
+  @@map("locations")
+}
+
+// ============================================================
+// INSTALLED APPS
+// ============================================================
+
+model InstalledApp {
+  id           String   @id @default(uuid())
+  deviceId     String
+  packageName  String
+  appName      String
+  versionName  String?
+  versionCode  Int?
+  isSystemApp  Boolean  @default(false)
+  installedAt  DateTime?
+  updatedAt    DateTime @updatedAt
+  firstSeen    DateTime @default(now())
+  lastSeen     DateTime @default(now())
+  isActive     Boolean  @default(true) // false = uninstalled
+
+  device    Device @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+  usages    AppUsage[]
+
+  @@unique([deviceId, packageName])
+  @@index([deviceId])
+  @@map("installed_apps")
+}
+
+// ============================================================
+// APP USAGE STATISTICS
+// ============================================================
+
+model AppUsage {
+  id           String   @id @default(uuid())
+  deviceId     String
+  appId        String
+  packageName  String
+  appName      String
+  usageMs      BigInt   // usage duration in milliseconds
+  date         DateTime // date only (truncated to day)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  device Device       @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+  app    InstalledApp @relation(fields: [appId], references: [id], onDelete: Cascade)
+
+  @@unique([deviceId, packageName, date])
+  @@index([deviceId, date])
+  @@map("app_usage")
+}
+
+// ============================================================
+// NOTIFICATIONS
+// ============================================================
+
+model AppNotification {
+  id          String   @id @default(uuid())
+  deviceId    String
+  packageName String
+  appName     String
+  title       String?
+  text        String?
+  category    String?
+  receivedAt  DateTime @default(now())
+
+  device Device @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+
+  @@index([deviceId, receivedAt])
+  @@index([deviceId, packageName])
+  @@map("notifications")
+}
+
+// ============================================================
+// RULES & PARENTAL CONTROLS
+// ============================================================
+
+enum RuleType {
+  APP_BLOCK
+  TIME_LIMIT
+  SCHEDULE
+  WEBSITE_BLOCK
+  FOCUS_MODE
+}
+
+model Rule {
+  id        String   @id @default(uuid())
+  deviceId  String
+  type      RuleType
+  name      String
+  isActive  Boolean  @default(true)
+  config    Json     // flexible config based on rule type
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  device Device @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+
+  @@index([deviceId, type])
+  @@map("rules")
+}
+
+// ============================================================
+// GEOFENCES
+// ============================================================
+
+model Geofence {
+  id        String   @id @default(uuid())
+  deviceId  String
+  name      String
+  latitude  Float
+  longitude Float
+  radius    Float    // meters
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  device Device @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+
+  @@map("geofences")
+}
+
+// ============================================================
+// ALERTS
+// ============================================================
+
+enum AlertType {
+  DEVICE_OFFLINE
+  LOW_BATTERY
+  LEFT_GEOFENCE
+  NEW_APP_INSTALLED
+  VPN_DISABLED
+  APP_LIMIT_REACHED
+  SUSPICIOUS_APP
+}
+
+enum AlertSeverity {
+  INFO
+  WARNING
+  CRITICAL
+}
+
+model Alert {
+  id        String        @id @default(uuid())
+  deviceId  String
+  type      AlertType
+  severity  AlertSeverity @default(INFO)
+  title     String
+  message   String
+  isRead    Boolean       @default(false)
+  metadata  Json?
+  createdAt DateTime      @default(now())
+
+  device Device @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+
+  @@index([deviceId, isRead])
+  @@index([deviceId, createdAt])
+  @@map("alerts")
+}
+
+// ============================================================
+// AUDIT LOGS
+// ============================================================
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  userId    String
+  action    String
+  resource  String
+  details   Json?
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@map("audit_logs")
+}
+
+// ============================================================
+// VPN LOGS (v3)
+// ============================================================
+
+enum VpnAction {
+  ALLOWED
+  BLOCKED
+}
+
+model VpnLog {
+  id        String    @id @default(uuid())
+  deviceId  String
+  domain    String
+  ip        String?
+  action    VpnAction
+  category  String?
+  protocol  String?
+  bytes     Int?
+  timestamp DateTime  @default(now())
+
+  device Device @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+
+  @@index([deviceId, timestamp])
+  @@index([deviceId, domain])
+  @@map("vpn_logs")
+}
