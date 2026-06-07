@@ -1,16 +1,17 @@
 "use client";
-
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/store/auth.store";
 import { Shield, Eye, EyeOff, AlertCircle } from "lucide-react";
 import Link from "next/link";
 
-export default function LoginPage() {
+export default function RegisterPage() {
   const router = useRouter();
-  const { login, isAuthenticated } = useAuthStore();
+  const { register, isAuthenticated } = useAuthStore();
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -31,13 +32,24 @@ export default function LoginPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+
+    if (password !== confirmPassword) {
+      setError("Passwords do not match");
+      return;
+    }
+
+    if (password.length < 6) {
+      setError("Password must be at least 6 characters");
+      return;
+    }
+
     setLoading(true);
     try {
-      await login(email, password);
+      await register(name, email, password);
       router.push("/dashboard");
     } catch (err: any) {
       setError(
-        err.response?.data?.message || "Invalid email or password"
+        err.response?.data?.message || "Registration failed. Try a different email."
       );
     } finally {
       setLoading(false);
@@ -63,14 +75,14 @@ export default function LoginPage() {
           </div>
           <h1 className="text-3xl font-bold gradient-text">Guardian</h1>
           <p className="mt-1" style={{ color: "var(--text-secondary)" }}>
-            Parental Control Dashboard
+            Create Parent Account
           </p>
         </div>
 
         {/* Card */}
         <div className="glass-card p-8">
           <h2 className="text-xl font-semibold mb-6" style={{ color: "var(--text-primary)" }}>
-            Sign in to your account
+            Create your parent account
           </h2>
 
           {error && (
@@ -81,10 +93,32 @@ export default function LoginPage() {
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-5">
+          <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="block text-sm font-medium mb-1.5" style={{ color: "var(--text-secondary)" }}>
-                Email
+                Full Name
+              </label>
+              <input
+                id="name"
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                required
+                placeholder="John Doe"
+                className="w-full px-4 py-3 rounded-lg text-sm outline-none transition-all"
+                style={{
+                  background: "var(--bg-secondary)",
+                  border: "1px solid var(--border)",
+                  color: "var(--text-primary)",
+                }}
+                onFocus={(e) => (e.target.style.borderColor = "var(--accent)")}
+                onBlur={(e) => (e.target.style.borderColor = "var(--border)")}
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-1.5" style={{ color: "var(--text-secondary)" }}>
+                Email Address
               </label>
               <input
                 id="email"
@@ -136,11 +170,33 @@ export default function LoginPage() {
               </div>
             </div>
 
+            <div>
+              <label className="block text-sm font-medium mb-1.5" style={{ color: "var(--text-secondary)" }}>
+                Confirm Password
+              </label>
+              <input
+                id="confirm-password"
+                type={showPassword ? "text" : "password"}
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                required
+                placeholder="••••••••"
+                className="w-full px-4 py-3 rounded-lg text-sm outline-none transition-all"
+                style={{
+                  background: "var(--bg-secondary)",
+                  border: "1px solid var(--border)",
+                  color: "var(--text-primary)",
+                }}
+                onFocus={(e) => (e.target.style.borderColor = "var(--accent)")}
+                onBlur={(e) => (e.target.style.borderColor = "var(--border)")}
+              />
+            </div>
+
             <button
-              id="login-submit"
+              id="register-submit"
               type="submit"
               disabled={loading}
-              className="btn-primary w-full justify-center py-3"
+              className="btn-primary w-full justify-center py-3 mt-2"
               style={{ opacity: loading ? 0.7 : 1 }}
             >
               {loading ? (
@@ -149,16 +205,16 @@ export default function LoginPage() {
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                   </svg>
-                  Signing in...
+                  Creating account...
                 </span>
-              ) : "Sign in"}
+              ) : "Sign Up"}
             </button>
           </form>
 
           <div className="mt-5 text-center text-sm" style={{ color: "var(--text-secondary)" }}>
-            Don't have an account?{" "}
-            <Link href="/register" className="font-semibold transition-colors hover:underline" style={{ color: "var(--accent)" }}>
-              Sign Up
+            Already have an account?{" "}
+            <Link href="/login" className="font-semibold transition-colors hover:underline" style={{ color: "var(--accent)" }}>
+              Sign In
             </Link>
           </div>
         </div>

@@ -15,6 +15,7 @@ interface AuthState {
   refreshToken: string | null;
   isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<void>;
+  register: (name: string, email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   setTokens: (access: string, refresh: string) => void;
 }
@@ -35,6 +36,18 @@ export const useAuthStore = create<AuthState>()(
 
       login: async (email, password) => {
         const { data } = await api.post("/auth/login", { email, password });
+        localStorage.setItem("guardian_access_token", data.accessToken);
+        localStorage.setItem("guardian_refresh_token", data.refreshToken);
+        set({
+          user: data.user,
+          accessToken: data.accessToken,
+          refreshToken: data.refreshToken,
+          isAuthenticated: true,
+        });
+      },
+
+      register: async (name, email, password) => {
+        const { data } = await api.post("/auth/register", { name, email, password });
         localStorage.setItem("guardian_access_token", data.accessToken);
         localStorage.setItem("guardian_refresh_token", data.refreshToken);
         set({
