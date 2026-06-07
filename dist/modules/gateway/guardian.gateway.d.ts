@@ -59,5 +59,8 @@ export declare class GuardianGateway implements OnGatewayConnection, OnGatewayDi
         parentId: string;
         level: number;
     }): void;
+    handleDeviceDeleted(payload: {
+        deviceId: string;
+    }): void;
     emitToParent(parentId: string, event: string, data: any): void;
 }

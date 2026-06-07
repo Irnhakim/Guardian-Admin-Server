@@ -203,6 +203,11 @@ export class GuardianGateway
     });
   }
 
+  @OnEvent('device.deleted')
+  handleDeviceDeleted(payload: { deviceId: string }) {
+    this.server.to(`device:${payload.deviceId}`).emit('device:deleted');
+  }
+
   // Utility to push to a parent's sockets directly
   emitToParent(parentId: string, event: string, data: any) {
     this.server.to(`parent:${parentId}`).emit(event, data);

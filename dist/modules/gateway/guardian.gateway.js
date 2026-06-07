@@ -149,6 +149,9 @@ let GuardianGateway = GuardianGateway_1 = class GuardianGateway {
             message: `Battery is at ${payload.level}%`,
         });
     }
+    handleDeviceDeleted(payload) {
+        this.server.to(`device:${payload.deviceId}`).emit('device:deleted');
+    }
     emitToParent(parentId, event, data) {
         this.server.to(`parent:${parentId}`).emit(event, data);
     }
@@ -216,6 +219,12 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", void 0)
 ], GuardianGateway.prototype, "handleLowBattery", null);
+__decorate([
+    (0, event_emitter_1.OnEvent)('device.deleted'),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", void 0)
+], GuardianGateway.prototype, "handleDeviceDeleted", null);
 exports.GuardianGateway = GuardianGateway = GuardianGateway_1 = __decorate([
     (0, websockets_1.WebSocketGateway)({
         cors: {

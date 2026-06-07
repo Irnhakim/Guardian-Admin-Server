@@ -183,7 +183,8 @@ export class DevicesService {
   }
 
   async delete(id: string, parentId: string) {
-    await this.findOne(id, parentId);
+    const device = await this.findOne(id, parentId);
+    this.eventEmitter.emit('device.deleted', { deviceId: device.deviceId });
     await this.prisma.device.delete({ where: { id } });
     return { message: 'Device removed' };
   }

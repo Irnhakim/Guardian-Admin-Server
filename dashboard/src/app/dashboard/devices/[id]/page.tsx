@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import dynamic from "next/dynamic";
 import { api } from "@/lib/api";
@@ -51,12 +51,33 @@ type Tab = (typeof tabs)[number];
 
 export default function DeviceDetailPage() {
   const { id } = useParams<{ id: string }>();
+  const router = useRouter();
   const socket = useSocket();
   const [activeTab, setActiveTab] = useState<Tab>("Overview");
   const [liveBattery, setLiveBattery] = useState<any>(null);
   const [liveLocation, setLiveLocation] = useState<any>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [isClearing, setIsClearing] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const handleDeleteDevice = async () => {
+    if (!device) return;
+    const confirmDelete = window.confirm(
+      `Are you sure you want to permanently delete "${device.deviceName}"? This will erase all location history, battery logs, installed apps list, and captured notifications.`
+    );
+    if (!confirmDelete) return;
+
+    try {
+      setIsDeleting(true);
+      await api.delete(`/devices/${device.id}`);
+      router.push("/dashboard");
+    } catch (err) {
+      console.error("Failed to delete device:", err);
+      alert("Failed to delete device. Please try again.");
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   const handleClearNotifications = async () => {
     if (!device) return;
@@ -511,6 +532,29 @@ export default function DeviceDetailPage() {
               </span>
             </div>
           ))}
+
+          {/* Danger Zone */}
+          <div className="border-t pt-6 mt-6" style={{ borderColor: "rgba(239, 68, 68, 0.2)" }}>
+            <p className="font-medium mb-1.5 text-red-400">Danger Zone</p>
+            <p className="text-xs mb-4" style={{ color: "var(--text-muted)" }}>
+              Permanently delete this device and erase all historical sync logs (battery, locations, app list, and intercepted notifications). This action is irreversible.
+            </p>
+            <button
+              onClick={handleDeleteDevice}
+              disabled={isDeleting}
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold transition-all hover:opacity-90 ${
+                isDeleting ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
+              }`}
+              style={{
+                background: "rgba(239, 68, 68, 0.1)",
+                border: "1px solid rgba(239, 68, 68, 0.3)",
+                color: "#ef4444",
+              }}
+            >
+              <Trash2 size={16} />
+              {isDeleting ? "Deleting Device..." : "Delete Device"}
+            </button>
+          </div>
         </div>
       )}
     </div>
