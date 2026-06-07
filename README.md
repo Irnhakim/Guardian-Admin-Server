@@ -2,6 +2,9 @@
 
 The backend API server and parent control panel for the **Guardian Parental Control System**. Built with NestJS (backend) and Next.js (dashboard UI), it acts as the centralized broker that gathers, processes, and presents real-time data synced from the child's Android device.
 
+> [!IMPORTANT]
+> **Interdependency Note**: This project requires the companion [Guardian Mobile Client](https://github.com/Irnhakim/Guardian-Mobile-Client) app to be running on the child's device in order to gather, synchronize, and display device status logs in real-time.
+
 GitHub Repository: [https://github.com/Irnhakim/Guardian-Admin-Server](https://github.com/Irnhakim/Guardian-Admin-Server)
 
 ---
