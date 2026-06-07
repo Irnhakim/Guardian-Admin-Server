@@ -45,17 +45,15 @@ let AppsService = class AppsService {
                 lastSeen: new Date(),
             },
         }));
-        const deactivateOp = this.prisma.installedApp.updateMany({
+        const deleteOp = this.prisma.installedApp.deleteMany({
             where: {
                 deviceId: device.id,
-                isActive: true,
                 packageName: { notIn: Array.from(incomingPackages) },
             },
-            data: { isActive: false },
         });
         const [results] = await this.prisma.$transaction([
             ...upsertOps,
-            deactivateOp,
+            deleteOp,
         ]);
         this.eventEmitter.emit('apps.synced', {
             deviceId: device.id,
@@ -68,7 +66,6 @@ let AppsService = class AppsService {
         return this.prisma.installedApp.findMany({
             where: {
                 device: { deviceId },
-                isActive: true,
                 ...(includeSystem ? {} : { isSystemApp: false }),
             },
             orderBy: { appName: 'asc' },

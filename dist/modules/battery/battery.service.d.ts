@@ -8,28 +8,28 @@ export declare class BatteryService {
     log(deviceId: string, dto: BatteryLogDto): Promise<{
         id: string;
         deviceId: string;
+        timestamp: Date;
         level: number;
         isCharging: boolean;
         temperature: number | null;
         voltage: number | null;
-        timestamp: Date;
     }>;
     getLatest(deviceId: string): Promise<{
         id: string;
         deviceId: string;
+        timestamp: Date;
         level: number;
         isCharging: boolean;
         temperature: number | null;
         voltage: number | null;
-        timestamp: Date;
     } | null>;
     getHistory(deviceId: string, limit?: number): Promise<{
         id: string;
         deviceId: string;
+        timestamp: Date;
         level: number;
         isCharging: boolean;
         temperature: number | null;
         voltage: number | null;
-        timestamp: Date;
     }[]>;
 }

@@ -6,23 +6,24 @@ export declare class NotificationsService {
     private eventEmitter;
     constructor(prisma: PrismaService, eventEmitter: EventEmitter2);
     log(deviceId: string, dto: CreateNotificationDto): Promise<{
+        title: string | null;
         id: string;
+        deviceId: string;
         packageName: string;
         appName: string;
-        title: string | null;
         text: string | null;
         category: string | null;
         receivedAt: Date;
-        deviceId: string;
     }>;
     getHistory(deviceId: string, limit?: number): Promise<{
+        title: string | null;
         id: string;
+        deviceId: string;
         packageName: string;
         appName: string;
-        title: string | null;
         text: string | null;
         category: string | null;
         receivedAt: Date;
-        deviceId: string;
     }[]>;
+    clearNotifications(deviceId: string): Promise<import("@prisma/client").Prisma.BatchPayload>;
 }

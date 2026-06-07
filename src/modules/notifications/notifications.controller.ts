@@ -1,5 +1,5 @@
 import {
-  Controller, Post, Get, Body, Param, Query, UseGuards, ParseIntPipe,
+  Controller, Post, Get, Delete, Body, Param, Query, UseGuards, ParseIntPipe,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { NotificationsService } from './notifications.service';
@@ -27,5 +27,11 @@ export class NotificationsController {
     @Query('limit', new ParseIntPipe({ optional: true })) limit?: number,
   ) {
     return this.notificationsService.getHistory(deviceId, limit);
+  }
+
+  @Delete()
+  @ApiOperation({ summary: 'Clear all notifications for a device' })
+  clear(@Param('deviceId') deviceId: string) {
+    return this.notificationsService.clearNotifications(deviceId);
   }
 }

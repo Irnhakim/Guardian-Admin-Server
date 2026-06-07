@@ -24,15 +24,32 @@ let BatteryService = class BatteryService {
         const device = await this.prisma.device.findUnique({ where: { deviceId } });
         if (!device)
             throw new common_1.NotFoundException('Device not found');
-        const log = await this.prisma.batteryLog.create({
-            data: {
-                deviceId: device.id,
-                level: dto.level,
-                isCharging: dto.isCharging,
-                temperature: dto.temperature,
-                voltage: dto.voltage,
-            },
+        let log = await this.prisma.batteryLog.findFirst({
+            where: { deviceId: device.id },
         });
+        if (log) {
+            log = await this.prisma.batteryLog.update({
+                where: { id: log.id },
+                data: {
+                    level: dto.level,
+                    isCharging: dto.isCharging,
+                    temperature: dto.temperature,
+                    voltage: dto.voltage,
+                    timestamp: new Date(),
+                },
+            });
+        }
+        else {
+            log = await this.prisma.batteryLog.create({
+                data: {
+                    deviceId: device.id,
+                    level: dto.level,
+                    isCharging: dto.isCharging,
+                    temperature: dto.temperature,
+                    voltage: dto.voltage,
+                },
+            });
+        }
         this.eventEmitter.emit('battery.updated', {
             deviceId: device.id,
             parentId: device.parentId,

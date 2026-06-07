@@ -14,18 +14,38 @@ export class LocationsService {
     const device = await this.prisma.device.findUnique({ where: { deviceId } });
     if (!device) throw new NotFoundException('Device not found');
 
-    const location = await this.prisma.location.create({
-      data: {
-        deviceId: device.id,
-        latitude: dto.latitude,
-        longitude: dto.longitude,
-        accuracy: dto.accuracy,
-        altitude: dto.altitude,
-        speed: dto.speed,
-        bearing: dto.bearing,
-        provider: dto.provider,
-      },
+    let location = await this.prisma.location.findFirst({
+      where: { deviceId: device.id },
     });
+
+    if (location) {
+      location = await this.prisma.location.update({
+        where: { id: location.id },
+        data: {
+          latitude: dto.latitude,
+          longitude: dto.longitude,
+          accuracy: dto.accuracy,
+          altitude: dto.altitude,
+          speed: dto.speed,
+          bearing: dto.bearing,
+          provider: dto.provider,
+          timestamp: new Date(),
+        },
+      });
+    } else {
+      location = await this.prisma.location.create({
+        data: {
+          deviceId: device.id,
+          latitude: dto.latitude,
+          longitude: dto.longitude,
+          accuracy: dto.accuracy,
+          altitude: dto.altitude,
+          speed: dto.speed,
+          bearing: dto.bearing,
+          provider: dto.provider,
+        },
+      });
+    }
 
     // Emit for real-time WebSocket updates
     this.eventEmitter.emit('location.updated', {

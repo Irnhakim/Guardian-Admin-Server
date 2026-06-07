@@ -29,6 +29,9 @@ let NotificationsController = class NotificationsController {
     getHistory(deviceId, limit) {
         return this.notificationsService.getHistory(deviceId, limit);
     }
+    clear(deviceId) {
+        return this.notificationsService.clearNotifications(deviceId);
+    }
 };
 exports.NotificationsController = NotificationsController;
 __decorate([
@@ -50,6 +53,14 @@ __decorate([
     __metadata("design:paramtypes", [String, Number]),
     __metadata("design:returntype", void 0)
 ], NotificationsController.prototype, "getHistory", null);
+__decorate([
+    (0, common_1.Delete)(),
+    (0, swagger_1.ApiOperation)({ summary: 'Clear all notifications for a device' }),
+    __param(0, (0, common_1.Param)('deviceId')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", void 0)
+], NotificationsController.prototype, "clear", null);
 exports.NotificationsController = NotificationsController = __decorate([
     (0, swagger_1.ApiTags)('Notifications'),
     (0, swagger_1.ApiBearerAuth)('JWT'),

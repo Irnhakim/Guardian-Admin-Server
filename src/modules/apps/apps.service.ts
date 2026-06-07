@@ -40,19 +40,17 @@ export class AppsService {
       }),
     );
 
-    // Mark missing apps as uninstalled
-    const deactivateOp = this.prisma.installedApp.updateMany({
+    // Delete apps that are no longer installed on the device
+    const deleteOp = this.prisma.installedApp.deleteMany({
       where: {
         deviceId: device.id,
-        isActive: true,
         packageName: { notIn: Array.from(incomingPackages) },
       },
-      data: { isActive: false },
     });
 
     const [results] = await this.prisma.$transaction([
       ...upsertOps,
-      deactivateOp,
+      deleteOp,
     ] as any);
 
     // Emit for real-time dashboard refresh
@@ -69,7 +67,6 @@ export class AppsService {
     return this.prisma.installedApp.findMany({
       where: {
         device: { deviceId },
-        isActive: true,
         ...(includeSystem ? {} : { isSystemApp: false }),
       },
       orderBy: { appName: 'asc' },

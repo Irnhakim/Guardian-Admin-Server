@@ -9,7 +9,7 @@ import { useSocket } from "@/hooks/useSocket";
 import {
   Battery, Wifi, WifiOff, Smartphone, MapPin,
   Clock, BarChart2, Shield, ChevronLeft,
-  Thermometer, Navigation, RefreshCw, Bell,
+  Thermometer, Navigation, RefreshCw, Bell, Trash2,
 } from "lucide-react";
 import Link from "next/link";
 import { formatDistanceToNow } from "date-fns";
@@ -56,6 +56,23 @@ export default function DeviceDetailPage() {
   const [liveBattery, setLiveBattery] = useState<any>(null);
   const [liveLocation, setLiveLocation] = useState<any>(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [isClearing, setIsClearing] = useState(false);
+
+  const handleClearNotifications = async () => {
+    if (!device) return;
+    const confirmClear = window.confirm("Are you sure you want to clear all notification history for this device?");
+    if (!confirmClear) return;
+
+    try {
+      setIsClearing(true);
+      await api.delete(`/devices/${device.deviceId}/notifications`);
+      refetchNotifications();
+    } catch (err) {
+      console.error("Failed to clear notifications:", err);
+    } finally {
+      setIsClearing(false);
+    }
+  };
 
   const { data: device, refetch: refetchDevice } = useQuery({
     queryKey: ["device", id],
@@ -287,7 +304,7 @@ export default function DeviceDetailPage() {
       {/* ── NOTIFICATIONS TAB ─────────────────────────── */}
       {activeTab === "Notifications" && (
         <div className="space-y-4">
-          <div className="flex gap-4 items-center">
+          <div className="flex justify-between items-center gap-4 flex-wrap">
             <input
               type="text"
               placeholder="Search notifications by app, title, or message..."
@@ -300,6 +317,22 @@ export default function DeviceDetailPage() {
                 color: "var(--text-primary)",
               }}
             />
+            {notifications.length > 0 && (
+              <button
+                onClick={handleClearNotifications}
+                disabled={isClearing}
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all hover:opacity-90`}
+                style={{
+                  background: "rgba(239, 68, 68, 0.1)",
+                  border: "1px solid rgba(239, 68, 68, 0.3)",
+                  color: "#ef4444",
+                  cursor: isClearing ? "not-allowed" : "pointer"
+                }}
+              >
+                <Trash2 size={16} />
+                {isClearing ? "Clearing..." : "Clear All"}
+              </button>
+            )}
           </div>
 
           <div className="glass-card overflow-hidden">

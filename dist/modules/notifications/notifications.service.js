@@ -24,6 +24,14 @@ let NotificationsService = class NotificationsService {
         const device = await this.prisma.device.findUnique({ where: { deviceId } });
         if (!device)
             throw new common_1.NotFoundException('Device not found');
+        const sevenDaysAgo = new Date();
+        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+        await this.prisma.appNotification.deleteMany({
+            where: {
+                deviceId: device.id,
+                receivedAt: { lt: sevenDaysAgo },
+            },
+        });
         const notification = await this.prisma.appNotification.create({
             data: {
                 deviceId: device.id,
@@ -45,10 +53,26 @@ let NotificationsService = class NotificationsService {
         const device = await this.prisma.device.findUnique({ where: { deviceId } });
         if (!device)
             throw new common_1.NotFoundException('Device not found');
+        const sevenDaysAgo = new Date();
+        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+        await this.prisma.appNotification.deleteMany({
+            where: {
+                deviceId: device.id,
+                receivedAt: { lt: sevenDaysAgo },
+            },
+        });
         return this.prisma.appNotification.findMany({
             where: { deviceId: device.id },
             orderBy: { receivedAt: 'desc' },
             take: limit,
+        });
+    }
+    async clearNotifications(deviceId) {
+        const device = await this.prisma.device.findUnique({ where: { deviceId } });
+        if (!device)
+            throw new common_1.NotFoundException('Device not found');
+        return this.prisma.appNotification.deleteMany({
+            where: { deviceId: device.id },
         });
     }
 };
