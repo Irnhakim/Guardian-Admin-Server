@@ -20,7 +20,9 @@
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "db:seed": "ts-node prisma/seed.ts",
     "db:migrate": "prisma migrate deploy",
-    "db:studio": "prisma studio"
+    "db:studio": "prisma studio",
+    "dev": "concurrently --names \"API,DASH\" --prefix-colors \"cyan.bold,magenta.bold\" \"npm run start:dev\" \"npm run dev --prefix dashboard\"",
+    "dev:studio": "concurrently --names \"API,DASH,DB\" --prefix-colors \"cyan.bold,magenta.bold,yellow.bold\" \"npm run start:dev\" \"npm run dev --prefix dashboard\" \"npm run db:studio\""
   },
   "dependencies": {
     "@nestjs/cache-manager": "^3.1.2",
@@ -66,6 +68,7 @@
     "@types/jest": "^30.0.0",
     "@types/node": "^24.0.0",
     "@types/supertest": "^7.0.0",
+    "concurrently": "^10.0.3",
     "eslint": "^9.18.0",
     "eslint-config-prettier": "^10.0.1",
     "eslint-plugin-prettier": "^5.2.2",

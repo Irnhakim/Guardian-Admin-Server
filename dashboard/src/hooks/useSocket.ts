@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useState } from "react";
 import { io, Socket } from "socket.io-client";
 import { useAuthStore } from "@/store/auth.store";
 
@@ -10,10 +10,17 @@ let socketInstance: Socket | null = null;
 
 export function useSocket() {
   const { accessToken, isAuthenticated } = useAuthStore();
-  const socketRef = useRef<Socket | null>(null);
+  const [socket, setSocket] = useState<Socket | null>(socketInstance);
 
   useEffect(() => {
-    if (!isAuthenticated || !accessToken) return;
+    if (!isAuthenticated || !accessToken) {
+      if (socketInstance) {
+        socketInstance.disconnect();
+        socketInstance = null;
+      }
+      setSocket(null);
+      return;
+    }
 
     if (!socketInstance) {
       socketInstance = io(`${WS_URL}/guardian`, {
@@ -25,14 +32,10 @@ export function useSocket() {
       });
     }
 
-    socketRef.current = socketInstance;
-
-    return () => {
-      // Don't disconnect on unmount — keep the connection alive
-    };
+    setSocket(socketInstance);
   }, [isAuthenticated, accessToken]);
 
-  return socketRef.current;
+  return socket;
 }
 
 export function disconnectSocket() {

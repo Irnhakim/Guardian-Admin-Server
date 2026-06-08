@@ -155,6 +155,26 @@ export class GuardianGateway
     return { event: 'message_sent', deviceId: data.deviceId };
   }
 
+  @SubscribeMessage('hide_app')
+  handleHideApp(
+    @MessageBody() data: { deviceId: string },
+    @ConnectedSocket() client: Socket,
+  ) {
+    // Forward hide command to the device — app icon disappears from launcher
+    this.server.to(`device:${data.deviceId}`).emit('app:hide');
+    return { event: 'app_hidden', deviceId: data.deviceId };
+  }
+
+  @SubscribeMessage('show_app')
+  handleShowApp(
+    @MessageBody() data: { deviceId: string },
+    @ConnectedSocket() client: Socket,
+  ) {
+    // Forward show command to the device — app icon reappears in launcher
+    this.server.to(`device:${data.deviceId}`).emit('app:show');
+    return { event: 'app_shown', deviceId: data.deviceId };
+  }
+
   // ── Event Listeners (emitted from services) ──────────────────────────
 
   @OnEvent('battery.updated')

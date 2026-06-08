@@ -112,6 +112,14 @@ let GuardianGateway = GuardianGateway_1 = class GuardianGateway {
         });
         return { event: 'message_sent', deviceId: data.deviceId };
     }
+    handleHideApp(data, client) {
+        this.server.to(`device:${data.deviceId}`).emit('app:hide');
+        return { event: 'app_hidden', deviceId: data.deviceId };
+    }
+    handleShowApp(data, client) {
+        this.server.to(`device:${data.deviceId}`).emit('app:show');
+        return { event: 'app_shown', deviceId: data.deviceId };
+    }
     handleBatteryUpdate(payload) {
         this.server.to(`parent:${payload.parentId}`).emit('battery:update', {
             deviceId: payload.deviceId,
@@ -206,6 +214,22 @@ __decorate([
     __metadata("design:paramtypes", [Object, socket_io_1.Socket]),
     __metadata("design:returntype", void 0)
 ], GuardianGateway.prototype, "handleSendDeviceMessage", null);
+__decorate([
+    (0, websockets_1.SubscribeMessage)('hide_app'),
+    __param(0, (0, websockets_1.MessageBody)()),
+    __param(1, (0, websockets_1.ConnectedSocket)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, socket_io_1.Socket]),
+    __metadata("design:returntype", void 0)
+], GuardianGateway.prototype, "handleHideApp", null);
+__decorate([
+    (0, websockets_1.SubscribeMessage)('show_app'),
+    __param(0, (0, websockets_1.MessageBody)()),
+    __param(1, (0, websockets_1.ConnectedSocket)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, socket_io_1.Socket]),
+    __metadata("design:returntype", void 0)
+], GuardianGateway.prototype, "handleShowApp", null);
 __decorate([
     (0, event_emitter_1.OnEvent)('battery.updated'),
     __metadata("design:type", Function),

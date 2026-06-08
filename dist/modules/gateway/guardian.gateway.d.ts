@@ -34,6 +34,18 @@ export declare class GuardianGateway implements OnGatewayConnection, OnGatewayDi
         event: string;
         deviceId: string;
     };
+    handleHideApp(data: {
+        deviceId: string;
+    }, client: Socket): {
+        event: string;
+        deviceId: string;
+    };
+    handleShowApp(data: {
+        deviceId: string;
+    }, client: Socket): {
+        event: string;
+        deviceId: string;
+    };
     handleBatteryUpdate(payload: {
         deviceId: string;
         parentId: string;

@@ -10,7 +10,7 @@ import {
   Battery, Wifi, WifiOff, Smartphone, MapPin,
   Clock, BarChart2, Shield, ChevronLeft,
   Thermometer, Navigation, RefreshCw, Bell, Trash2,
-  Send, MessageSquare, Lock,
+  Send, MessageSquare, Lock, Eye, EyeOff,
 } from "lucide-react";
 import Link from "next/link";
 import { formatDistanceToNow } from "date-fns";
@@ -65,6 +65,17 @@ export default function DeviceDetailPage() {
   const [msgType, setMsgType] = useState<"MESSAGE" | "BLOCK">("MESSAGE");
   const [msgPassword, setMsgPassword] = useState("");
   const [isSendingMsg, setIsSendingMsg] = useState(false);
+  const [isAppHidden, setIsAppHidden] = useState(false);
+  const [isTogglingVisibility, setIsTogglingVisibility] = useState(false);
+
+  const handleToggleAppVisibility = () => {
+    if (!socket || !device) return;
+    setIsTogglingVisibility(true);
+    const newHidden = !isAppHidden;
+    socket.emit(newHidden ? "hide_app" : "show_app", { deviceId: device.deviceId });
+    setIsAppHidden(newHidden);
+    setTimeout(() => setIsTogglingVisibility(false), 1000);
+  };
 
   const handleSendMessage = () => {
     if (!socket || !device) return;
@@ -187,14 +198,26 @@ export default function DeviceDetailPage() {
   useEffect(() => {
     if (!socket || !id) return;
     socket.emit("subscribe:device", { deviceId: id });
-    socket.on("battery:update", ({ battery }) => setLiveBattery(battery));
-    socket.on("location:update", ({ location }) => setLiveLocation(location));
-    socket.on("apps:synced", () => {
-      refetchApps();
-      refetchDevice();
+    socket.on("battery:update", (payload: { deviceId: string; battery: any }) => {
+      if (payload.deviceId === id) {
+        setLiveBattery(payload.battery);
+      }
     });
-    socket.on("usage:synced", () => {
-      refetchUsage();
+    socket.on("location:update", (payload: { deviceId: string; location: any }) => {
+      if (payload.deviceId === id) {
+        setLiveLocation(payload.location);
+      }
+    });
+    socket.on("apps:synced", (payload: { deviceId: string }) => {
+      if (payload.deviceId === id) {
+        refetchApps();
+        refetchDevice();
+      }
+    });
+    socket.on("usage:synced", (payload: { deviceId: string }) => {
+      if (payload.deviceId === id) {
+        refetchUsage();
+      }
     });
     socket.on("notification:received", (payload: { deviceId: string; notification: any }) => {
       if (payload.deviceId === id) {
@@ -783,6 +806,48 @@ export default function DeviceDetailPage() {
               </span>
             </div>
           ))}
+
+          {/* App Visibility Control */}
+          <div className="border-t pt-5 mt-5" style={{ borderColor: "rgba(99,102,241,0.2)" }}>
+            <p className="font-medium mb-1" style={{ color: "var(--text-primary)" }}>App Visibility</p>
+            <p className="text-xs mb-4" style={{ color: "var(--text-muted)" }}>
+              Hide the Guardian app icon from the child&apos;s launcher. The app keeps running in the background.
+              Use &quot;Show App&quot; to restore the icon remotely anytime.
+            </p>
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs"
+                style={{
+                  background: isAppHidden ? "rgba(239,68,68,0.08)" : "rgba(16,185,129,0.08)",
+                  border: `1px solid ${isAppHidden ? "rgba(239,68,68,0.25)" : "rgba(16,185,129,0.25)"}`,
+                  color: isAppHidden ? "#ef4444" : "#10b981",
+                }}>
+                {isAppHidden ? <EyeOff size={13} /> : <Eye size={13} />}
+                <span className="font-medium">{isAppHidden ? "Hidden" : "Visible"}</span>
+              </div>
+              <button
+                id="btn-toggle-app-visibility"
+                onClick={handleToggleAppVisibility}
+                disabled={isTogglingVisibility || !device}
+                className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold transition-all hover:opacity-90 ${
+                  isTogglingVisibility ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
+                }`}
+                style={{
+                  background: isAppHidden
+                    ? "rgba(16,185,129,0.1)"
+                    : "rgba(99,102,241,0.1)",
+                  border: `1px solid ${isAppHidden ? "rgba(16,185,129,0.3)" : "rgba(99,102,241,0.3)"}`,
+                  color: isAppHidden ? "#10b981" : "#818cf8",
+                }}
+              >
+                {isAppHidden ? <Eye size={15} /> : <EyeOff size={15} />}
+                {isTogglingVisibility
+                  ? "Sending..."
+                  : isAppHidden
+                  ? "Show App"
+                  : "Hide App"}
+              </button>
+            </div>
+          </div>
 
           {/* Danger Zone */}
           <div className="border-t pt-6 mt-6" style={{ borderColor: "rgba(239, 68, 68, 0.2)" }}>
