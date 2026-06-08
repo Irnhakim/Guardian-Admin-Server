@@ -142,6 +142,19 @@ export class GuardianGateway
     return { event: 'pinged', deviceId: data.deviceId };
   }
 
+  @SubscribeMessage('send_device_message')
+  handleSendDeviceMessage(
+    @MessageBody() data: { deviceId: string; type: 'MESSAGE' | 'BLOCK'; message: string; password?: string },
+    @ConnectedSocket() client: Socket,
+  ) {
+    this.server.to(`device:${data.deviceId}`).emit('device:message', {
+      type: data.type,
+      message: data.message,
+      password: data.password,
+    });
+    return { event: 'message_sent', deviceId: data.deviceId };
+  }
+
   // ── Event Listeners (emitted from services) ──────────────────────────
 
   @OnEvent('battery.updated')
@@ -206,6 +219,29 @@ export class GuardianGateway
   @OnEvent('device.deleted')
   handleDeviceDeleted(payload: { deviceId: string }) {
     this.server.to(`device:${payload.deviceId}`).emit('device:deleted');
+  }
+
+  @OnEvent('approval.requested')
+  handleApprovalRequested(payload: { deviceId: string; parentId: string; data: any }) {
+    this.server.to(`parent:${payload.parentId}`).emit('approval:requested', {
+      deviceId: payload.deviceId,
+      data: payload.data,
+    });
+  }
+
+  @OnEvent('approval.resolved')
+  handleApprovalResolved(payload: {
+    deviceId: string;
+    deviceHardwareId: string;
+    packageName: string;
+    appName: string;
+    status: string;
+  }) {
+    this.server.to(`device:${payload.deviceHardwareId}`).emit('approval:resolved', {
+      packageName: payload.packageName,
+      appName: payload.appName,
+      status: payload.status,
+    });
   }
 
   // Utility to push to a parent's sockets directly

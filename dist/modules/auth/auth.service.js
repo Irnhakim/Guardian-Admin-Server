@@ -122,7 +122,10 @@ let AuthService = class AuthService {
         const expiresAt = new Date();
         expiresAt.setDate(expiresAt.getDate() + 7);
         await this.prisma.refreshToken.deleteMany({
-            where: { userId },
+            where: {
+                userId,
+                expiresAt: { lt: new Date() },
+            },
         });
         await this.prisma.refreshToken.create({
             data: { token: refreshTokenValue, userId, expiresAt },

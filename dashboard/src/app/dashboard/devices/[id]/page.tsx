@@ -10,6 +10,7 @@ import {
   Battery, Wifi, WifiOff, Smartphone, MapPin,
   Clock, BarChart2, Shield, ChevronLeft,
   Thermometer, Navigation, RefreshCw, Bell, Trash2,
+  Send, MessageSquare, Lock,
 } from "lucide-react";
 import Link from "next/link";
 import { formatDistanceToNow } from "date-fns";
@@ -46,7 +47,7 @@ const formatTime = (dateStr: string) => {
   }
 };
 
-const tabs = ["Overview", "Apps", "Notifications", "Location", "Usage", "Security"] as const;
+const tabs = ["Overview", "Apps", "Approvals", "Notifications", "Location", "Usage", "Security"] as const;
 type Tab = (typeof tabs)[number];
 
 export default function DeviceDetailPage() {
@@ -59,6 +60,37 @@ export default function DeviceDetailPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [isClearing, setIsClearing] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+
+  const [msgText, setMsgText] = useState("");
+  const [msgType, setMsgType] = useState<"MESSAGE" | "BLOCK">("MESSAGE");
+  const [msgPassword, setMsgPassword] = useState("");
+  const [isSendingMsg, setIsSendingMsg] = useState(false);
+
+  const handleSendMessage = () => {
+    if (!socket || !device) return;
+    if (!msgText.trim()) {
+      alert("Pesan tidak boleh kosong!");
+      return;
+    }
+    if (msgType === "BLOCK" && !msgPassword.trim()) {
+      alert("Sandi pembuka kunci tidak boleh kosong!");
+      return;
+    }
+
+    setIsSendingMsg(true);
+    socket.emit("send_device_message", {
+      deviceId: device.deviceId,
+      type: msgType,
+      message: msgText,
+      password: msgType === "BLOCK" ? msgPassword : "",
+    });
+
+    // Reset input fields
+    setMsgText("");
+    setMsgPassword("");
+    alert("Pesan berhasil dikirim ke perangkat!");
+    setIsSendingMsg(false);
+  };
 
   const handleDeleteDevice = async () => {
     if (!device) return;
@@ -118,6 +150,12 @@ export default function DeviceDetailPage() {
     enabled: !!device && activeTab === "Apps",
   });
 
+  const { data: approvals = [], refetch: refetchApprovals } = useQuery({
+    queryKey: ["approvals", id],
+    queryFn: () => api.get(`/devices/${device?.deviceId}/approvals`).then((r) => r.data),
+    enabled: !!device && activeTab === "Approvals",
+  });
+
   const { data: usage = [], refetch: refetchUsage } = useQuery({
     queryKey: ["usage", id],
     queryFn: () => api.get(`/devices/${device?.deviceId}/usage`).then((r) => r.data),
@@ -131,6 +169,20 @@ export default function DeviceDetailPage() {
   });
 
   const [isSyncing, setIsSyncing] = useState(false);
+  const [resolvingId, setResolvingId] = useState<string | null>(null);
+
+  const handleResolveApproval = async (approvalId: string, status: "APPROVED" | "REJECTED") => {
+    try {
+      setResolvingId(approvalId);
+      await api.patch(`/devices/${device?.deviceId}/approvals/${approvalId}`, { status });
+      refetchApprovals();
+    } catch (err) {
+      console.error("Failed to resolve approval:", err);
+      alert("Failed to update status. Please try again.");
+    } finally {
+      setResolvingId(null);
+    }
+  };
 
   useEffect(() => {
     if (!socket || !id) return;
@@ -149,14 +201,20 @@ export default function DeviceDetailPage() {
         refetchNotifications();
       }
     });
+    socket.on("approval:requested", (payload: { deviceId: string; data: any }) => {
+      if (payload.deviceId === id) {
+        refetchApprovals();
+      }
+    });
     return () => {
       socket.off("battery:update");
       socket.off("location:update");
       socket.off("apps:synced");
       socket.off("usage:synced");
       socket.off("notification:received");
+      socket.off("approval:requested");
     };
-  }, [socket, id, refetchApps, refetchDevice, refetchUsage, refetchNotifications]);
+  }, [socket, id, refetchApps, refetchDevice, refetchUsage, refetchNotifications, refetchApprovals]);
 
   const handleForceSync = () => {
     if (!socket || !device) return;
@@ -292,6 +350,109 @@ export default function DeviceDetailPage() {
               ))}
             </div>
           </div>
+
+          {/* Kirim Pesan atau Kunci Layar */}
+          <div className="metric-card col-span-3 mt-1">
+            <div className="flex items-center gap-2 mb-4">
+              <MessageSquare size={18} style={{ color: "var(--accent)" }} />
+              <span className="font-semibold text-sm" style={{ color: "var(--text-primary)" }}>Kirim Pesan / Kunci Layar</span>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-xs font-semibold mb-2" style={{ color: "var(--text-secondary)" }}>Tipe Tindakan</label>
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setMsgType("MESSAGE")}
+                      className={`flex-1 py-2 rounded-lg text-xs font-semibold border transition-all ${
+                        msgType === "MESSAGE"
+                          ? "bg-[var(--accent)] text-white border-none"
+                          : "bg-transparent text-[var(--text-secondary)] border-[var(--border)] hover:bg-[rgba(255,255,255,0.02)]"
+                      }`}
+                    >
+                      Pesan Pop-up Biasa
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setMsgType("BLOCK")}
+                      className={`flex-1 py-2 rounded-lg text-xs font-semibold border transition-all ${
+                        msgType === "BLOCK"
+                          ? "bg-rose-600 text-white border-none"
+                          : "bg-transparent text-[var(--text-secondary)] border-[var(--border)] hover:bg-[rgba(255,255,255,0.02)]"
+                      }`}
+                    >
+                      Kunci Layar (Blokir)
+                    </button>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold mb-2" style={{ color: "var(--text-secondary)" }}>Isi Pesan</label>
+                  <textarea
+                    rows={3}
+                    placeholder={msgType === "MESSAGE" ? "Tulis pesan biasa untuk anak..." : "Tulis pesan peringatan layar terkunci..."}
+                    value={msgText}
+                    onChange={(e) => setMsgText(e.target.value)}
+                    className="w-full px-3 py-2 text-sm rounded-lg outline-none border focus:border-[var(--accent)] transition-colors resize-none"
+                    style={{
+                      background: "var(--bg-secondary)",
+                      borderColor: "var(--border)",
+                      color: "var(--text-primary)",
+                    }}
+                  />
+                </div>
+              </div>
+
+              <div className="flex flex-col justify-between space-y-4">
+                {msgType === "BLOCK" ? (
+                  <div className="animate-in fade-in slide-in-from-top-1 duration-200">
+                    <label className="block text-xs font-semibold mb-2 text-rose-400">Sandi Pembuka Kunci (PIN)</label>
+                    <div className="relative">
+                      <input
+                        type="text"
+                        placeholder="Contoh: 1234 atau sandi rahasia..."
+                        value={msgPassword}
+                        onChange={(e) => setMsgPassword(e.target.value)}
+                        className="w-full px-3 py-2 pl-9 text-sm rounded-lg outline-none border focus:border-rose-500 transition-colors"
+                        style={{
+                          background: "var(--bg-secondary)",
+                          borderColor: "var(--border)",
+                          color: "var(--text-primary)",
+                        }}
+                      />
+                      <Lock size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-rose-400" />
+                    </div>
+                    <p className="text-[10px] mt-1.5" style={{ color: "var(--text-muted)" }}>
+                      Anak harus memasukkan kata sandi ini persis untuk menutup layar pemblokiran pada ponselnya.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="text-xs" style={{ color: "var(--text-muted)" }}>
+                    Pesan biasa akan memunculkan dialog pop-up yang dapat langsung ditutup oleh anak dengan menekan tombol &quot;OK&quot;. Cocok untuk memberi peringatan ringan.
+                  </div>
+                )}
+                
+                <div className="flex-1 flex items-end">
+                  <button
+                    type="button"
+                    onClick={handleSendMessage}
+                    disabled={isSendingMsg || !isOnline}
+                    className={`btn-primary w-full flex items-center justify-center gap-2 py-2.5 font-semibold text-sm ${
+                      (!isOnline || isSendingMsg) ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
+                    }`}
+                    style={{
+                      background: msgType === "BLOCK" ? "#ef4444" : "var(--accent)"
+                    }}
+                  >
+                    <Send size={15} />
+                    {isSendingMsg ? "Mengirim..." : msgType === "BLOCK" ? "Kirim Blokir Layar" : "Kirim Pesan Layar"}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       )}
 
@@ -316,6 +477,96 @@ export default function DeviceDetailPage() {
             {apps.length === 0 && (
               <div className="p-8 text-center" style={{ color: "var(--text-muted)" }}>
                 No apps synced yet
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ── APPROVALS TAB ────────────────────────────── */}
+      {activeTab === "Approvals" && (
+        <div className="glass-card overflow-hidden">
+          <div className="p-4 border-b flex items-center justify-between" style={{ borderColor: "var(--border)" }}>
+            <div>
+              <p className="font-medium" style={{ color: "var(--text-primary)" }}>
+                App Install Approvals ({approvals.length})
+              </p>
+              <p className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>
+                Manage installations from sources outside the Google Play Store
+              </p>
+            </div>
+            <span className="text-xs badge badge-blue" style={{ background: "rgba(92,124,250,0.15)", color: "var(--accent)" }}>
+              {approvals.filter((a: any) => a.status === "PENDING").length} Pending
+            </span>
+          </div>
+
+          <div className="divide-y" style={{ borderColor: "var(--border)" }}>
+            {approvals.map((app: any) => {
+              const statusColors = {
+                PENDING: { bg: "rgba(245,158,11,0.15)", text: "#f59e0b", label: "Pending Approval" },
+                APPROVED: { bg: "rgba(16,185,129,0.15)", text: "#10b981", label: "Approved" },
+                REJECTED: { bg: "rgba(239,68,68,0.15)", text: "#ef4444", label: "Rejected" },
+              };
+              const config = statusColors[app.status as keyof typeof statusColors] || {
+                bg: "rgba(107,114,128,0.15)",
+                text: "#6b7280",
+                label: app.status,
+              };
+
+              return (
+                <div key={app.id} className="flex items-center justify-between px-4 py-4 hover:bg-[rgba(255,255,255,0.01)] transition-colors">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl flex items-center justify-center font-bold text-white shrink-0 text-sm shadow-md"
+                      style={{ backgroundColor: getHashColor(app.appName || app.packageName) }}>
+                      {getInitials(app.appName || app.packageName)}
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>
+                          {app.appName}
+                        </p>
+                        <span className="text-xs px-2 py-0.5 rounded-full font-medium" style={{ background: config.bg, color: config.text }}>
+                          {config.label}
+                        </span>
+                      </div>
+                      <p className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>
+                        {app.packageName} • Source: <span className="text-gray-300 font-mono text-[11px]">{app.installer || "Unknown"}</span>
+                      </p>
+                      <p className="text-[10px] mt-1" style={{ color: "var(--text-muted)" }}>
+                        Requested {formatTime(app.requestedAt)}
+                        {app.resolvedAt && ` • Resolved ${formatTime(app.resolvedAt)}`}
+                      </p>
+                    </div>
+                  </div>
+
+                  {app.status === "PENDING" && (
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => handleResolveApproval(app.id, "APPROVED")}
+                        disabled={resolvingId !== null}
+                        className="btn-primary flex items-center gap-1 py-1.5 px-3 text-xs bg-emerald-600 hover:bg-emerald-500 border-none rounded-lg font-semibold cursor-pointer text-white"
+                        style={{ background: "#10b981" }}
+                      >
+                        Approve
+                      </button>
+                      <button
+                        onClick={() => handleResolveApproval(app.id, "REJECTED")}
+                        disabled={resolvingId !== null}
+                        className="btn-primary flex items-center gap-1 py-1.5 px-3 text-xs bg-rose-600 hover:bg-rose-500 border-none rounded-lg font-semibold cursor-pointer text-white"
+                        style={{ background: "#ef4444" }}
+                      >
+                        Reject
+                      </button>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+
+            {approvals.length === 0 && (
+              <div className="p-12 text-center" style={{ color: "var(--text-muted)" }}>
+                <Shield className="mx-auto mb-2 opacity-40" size={36} />
+                <p>No outside installations detected or requested yet.</p>
               </div>
             )}
           </div>

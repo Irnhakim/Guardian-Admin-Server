@@ -85,6 +85,7 @@ model Device {
   alerts            Alert[]
   vpnLogs           VpnLog[]
   geofences         Geofence[]
+  appApprovals      AppApproval[]
 
   @@map("devices")
 }
@@ -336,4 +337,30 @@ model VpnLog {
   @@index([deviceId, timestamp])
   @@index([deviceId, domain])
   @@map("vpn_logs")
+}
+
+// ============================================================
+// APP INSTALLATION APPROVALS
+// ============================================================
+
+enum ApprovalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model AppApproval {
+  id          String         @id @default(uuid())
+  deviceId    String
+  packageName String
+  appName     String
+  installer   String?
+  status      ApprovalStatus @default(PENDING)
+  requestedAt DateTime       @default(now())
+  resolvedAt  DateTime?
+
+  device Device @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+
+  @@unique([deviceId, packageName])
+  @@map("app_approvals")
 }

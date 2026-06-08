@@ -10,6 +10,7 @@ import { LocationsModule } from './modules/locations/locations.module';
 import { AppsModule } from './modules/apps/apps.module';
 import { GatewayModule } from './modules/gateway/gateway.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
+import { ApprovalsModule } from './modules/approvals/approvals.module';
 import { AppController } from './app.controller';
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import { DeviceActivityInterceptor } from './common/interceptors/device-activity.interceptor';
@@ -41,6 +42,7 @@ import { DeviceActivityInterceptor } from './common/interceptors/device-activity
     AppsModule,
     GatewayModule,
     NotificationsModule,
+    ApprovalsModule,
   ],
   controllers: [AppController],
   providers: [

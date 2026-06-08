@@ -19,6 +19,7 @@ const locations_module_1 = require("./modules/locations/locations.module");
 const apps_module_1 = require("./modules/apps/apps.module");
 const gateway_module_1 = require("./modules/gateway/gateway.module");
 const notifications_module_1 = require("./modules/notifications/notifications.module");
+const approvals_module_1 = require("./modules/approvals/approvals.module");
 const app_controller_1 = require("./app.controller");
 const core_1 = require("@nestjs/core");
 const device_activity_interceptor_1 = require("./common/interceptors/device-activity.interceptor");
@@ -44,6 +45,7 @@ exports.AppModule = AppModule = __decorate([
             apps_module_1.AppsModule,
             gateway_module_1.GatewayModule,
             notifications_module_1.NotificationsModule,
+            approvals_module_1.ApprovalsModule,
         ],
         controllers: [app_controller_1.AppController],
         providers: [

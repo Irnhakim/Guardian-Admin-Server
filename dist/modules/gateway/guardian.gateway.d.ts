@@ -25,6 +25,15 @@ export declare class GuardianGateway implements OnGatewayConnection, OnGatewayDi
         event: string;
         deviceId: string;
     };
+    handleSendDeviceMessage(data: {
+        deviceId: string;
+        type: 'MESSAGE' | 'BLOCK';
+        message: string;
+        password?: string;
+    }, client: Socket): {
+        event: string;
+        deviceId: string;
+    };
     handleBatteryUpdate(payload: {
         deviceId: string;
         parentId: string;
@@ -61,6 +70,18 @@ export declare class GuardianGateway implements OnGatewayConnection, OnGatewayDi
     }): void;
     handleDeviceDeleted(payload: {
         deviceId: string;
+    }): void;
+    handleApprovalRequested(payload: {
+        deviceId: string;
+        parentId: string;
+        data: any;
+    }): void;
+    handleApprovalResolved(payload: {
+        deviceId: string;
+        deviceHardwareId: string;
+        packageName: string;
+        appName: string;
+        status: string;
     }): void;
     emitToParent(parentId: string, event: string, data: any): void;
 }

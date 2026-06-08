@@ -104,6 +104,14 @@ let GuardianGateway = GuardianGateway_1 = class GuardianGateway {
         this.server.to(`device:${data.deviceId}`).emit('force_sync');
         return { event: 'pinged', deviceId: data.deviceId };
     }
+    handleSendDeviceMessage(data, client) {
+        this.server.to(`device:${data.deviceId}`).emit('device:message', {
+            type: data.type,
+            message: data.message,
+            password: data.password,
+        });
+        return { event: 'message_sent', deviceId: data.deviceId };
+    }
     handleBatteryUpdate(payload) {
         this.server.to(`parent:${payload.parentId}`).emit('battery:update', {
             deviceId: payload.deviceId,
@@ -152,6 +160,19 @@ let GuardianGateway = GuardianGateway_1 = class GuardianGateway {
     handleDeviceDeleted(payload) {
         this.server.to(`device:${payload.deviceId}`).emit('device:deleted');
     }
+    handleApprovalRequested(payload) {
+        this.server.to(`parent:${payload.parentId}`).emit('approval:requested', {
+            deviceId: payload.deviceId,
+            data: payload.data,
+        });
+    }
+    handleApprovalResolved(payload) {
+        this.server.to(`device:${payload.deviceHardwareId}`).emit('approval:resolved', {
+            packageName: payload.packageName,
+            appName: payload.appName,
+            status: payload.status,
+        });
+    }
     emitToParent(parentId, event, data) {
         this.server.to(`parent:${parentId}`).emit(event, data);
     }
@@ -177,6 +198,14 @@ __decorate([
     __metadata("design:paramtypes", [Object, socket_io_1.Socket]),
     __metadata("design:returntype", void 0)
 ], GuardianGateway.prototype, "handlePingDevice", null);
+__decorate([
+    (0, websockets_1.SubscribeMessage)('send_device_message'),
+    __param(0, (0, websockets_1.MessageBody)()),
+    __param(1, (0, websockets_1.ConnectedSocket)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, socket_io_1.Socket]),
+    __metadata("design:returntype", void 0)
+], GuardianGateway.prototype, "handleSendDeviceMessage", null);
 __decorate([
     (0, event_emitter_1.OnEvent)('battery.updated'),
     __metadata("design:type", Function),
@@ -225,6 +254,18 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", void 0)
 ], GuardianGateway.prototype, "handleDeviceDeleted", null);
+__decorate([
+    (0, event_emitter_1.OnEvent)('approval.requested'),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", void 0)
+], GuardianGateway.prototype, "handleApprovalRequested", null);
+__decorate([
+    (0, event_emitter_1.OnEvent)('approval.resolved'),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", void 0)
+], GuardianGateway.prototype, "handleApprovalResolved", null);
 exports.GuardianGateway = GuardianGateway = GuardianGateway_1 = __decorate([
     (0, websockets_1.WebSocketGateway)({
         cors: {

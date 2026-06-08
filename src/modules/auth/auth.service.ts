@@ -98,9 +98,12 @@ export class AuthService {
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + 7);
 
-    // Ensure only one active refresh token per user by deleting older ones
+    // Delete expired refresh tokens for the user to clean up database
     await this.prisma.refreshToken.deleteMany({
-      where: { userId },
+      where: {
+        userId,
+        expiresAt: { lt: new Date() },
+      },
     });
 
     await this.prisma.refreshToken.create({
