@@ -196,36 +196,41 @@ export default function DeviceDetailPage() {
   };
 
   useEffect(() => {
-    if (!socket || !id) return;
-    socket.emit("subscribe:device", { deviceId: id });
+    if (!socket || !device) return;
+    const targetId = device.id;
+    const hardwareId = device.deviceId;
+
+    socket.emit("subscribe:device", { deviceId: targetId });
+    socket.emit("subscribe:device", { deviceId: hardwareId });
+
     socket.on("battery:update", (payload: { deviceId: string; battery: any }) => {
-      if (payload.deviceId === id) {
+      if (payload.deviceId === targetId || payload.deviceId === hardwareId) {
         setLiveBattery(payload.battery);
       }
     });
     socket.on("location:update", (payload: { deviceId: string; location: any }) => {
-      if (payload.deviceId === id) {
+      if (payload.deviceId === targetId || payload.deviceId === hardwareId) {
         setLiveLocation(payload.location);
       }
     });
     socket.on("apps:synced", (payload: { deviceId: string }) => {
-      if (payload.deviceId === id) {
+      if (payload.deviceId === targetId || payload.deviceId === hardwareId) {
         refetchApps();
         refetchDevice();
       }
     });
     socket.on("usage:synced", (payload: { deviceId: string }) => {
-      if (payload.deviceId === id) {
+      if (payload.deviceId === targetId || payload.deviceId === hardwareId) {
         refetchUsage();
       }
     });
     socket.on("notification:received", (payload: { deviceId: string; notification: any }) => {
-      if (payload.deviceId === id) {
+      if (payload.deviceId === targetId || payload.deviceId === hardwareId) {
         refetchNotifications();
       }
     });
     socket.on("approval:requested", (payload: { deviceId: string; data: any }) => {
-      if (payload.deviceId === id) {
+      if (payload.deviceId === targetId || payload.deviceId === hardwareId) {
         refetchApprovals();
       }
     });
@@ -237,7 +242,7 @@ export default function DeviceDetailPage() {
       socket.off("notification:received");
       socket.off("approval:requested");
     };
-  }, [socket, id, refetchApps, refetchDevice, refetchUsage, refetchNotifications, refetchApprovals]);
+  }, [socket, device, refetchApps, refetchDevice, refetchUsage, refetchNotifications, refetchApprovals]);
 
   const handleForceSync = () => {
     if (!socket || !device) return;

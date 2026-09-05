@@ -102,7 +102,9 @@ let DevicesService = class DevicesService {
     }
     async findOne(id) {
         const device = await this.prisma.device.findFirst({
-            where: { id },
+            where: {
+                OR: [{ id }, { deviceId: id }],
+            },
             include: {
                 _count: {
                     select: {
@@ -138,8 +140,8 @@ let DevicesService = class DevicesService {
         return device;
     }
     async update(id, dto) {
-        await this.findOne(id);
-        return this.prisma.device.update({ where: { id }, data: dto });
+        const device = await this.findOne(id);
+        return this.prisma.device.update({ where: { id: device.id }, data: dto });
     }
     async updateStatus(deviceId, status) {
         return this.prisma.device.update({
@@ -156,7 +158,7 @@ let DevicesService = class DevicesService {
     async delete(id) {
         const device = await this.findOne(id);
         this.eventEmitter.emit('device.deleted', { deviceId: device.deviceId });
-        await this.prisma.device.delete({ where: { id } });
+        await this.prisma.device.delete({ where: { id: device.id } });
         return { message: 'Device removed' };
     }
 };
