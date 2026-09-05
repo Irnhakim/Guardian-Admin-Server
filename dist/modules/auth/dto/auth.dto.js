@@ -9,40 +9,9 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.RefreshTokenDto = exports.LoginDto = exports.RegisterDto = void 0;
+exports.RefreshTokenDto = exports.LoginDto = void 0;
 const class_validator_1 = require("class-validator");
 const swagger_1 = require("@nestjs/swagger");
-const client_1 = require("@prisma/client");
-class RegisterDto {
-    email;
-    name;
-    password;
-    role;
-}
-exports.RegisterDto = RegisterDto;
-__decorate([
-    (0, swagger_1.ApiProperty)({ example: 'parent@example.com' }),
-    (0, class_validator_1.IsEmail)(),
-    __metadata("design:type", String)
-], RegisterDto.prototype, "email", void 0);
-__decorate([
-    (0, swagger_1.ApiProperty)({ example: 'John Doe' }),
-    (0, class_validator_1.IsString)(),
-    (0, class_validator_1.MinLength)(2),
-    __metadata("design:type", String)
-], RegisterDto.prototype, "name", void 0);
-__decorate([
-    (0, swagger_1.ApiProperty)({ example: 'SecurePass123!', minLength: 8 }),
-    (0, class_validator_1.IsString)(),
-    (0, class_validator_1.MinLength)(8),
-    __metadata("design:type", String)
-], RegisterDto.prototype, "password", void 0);
-__decorate([
-    (0, swagger_1.ApiPropertyOptional)({ enum: client_1.Role, default: client_1.Role.PARENT }),
-    (0, class_validator_1.IsOptional)(),
-    (0, class_validator_1.IsEnum)(client_1.Role),
-    __metadata("design:type", String)
-], RegisterDto.prototype, "role", void 0);
 class LoginDto {
     email;
     password;

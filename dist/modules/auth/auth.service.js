@@ -48,31 +48,12 @@ const jwt_1 = require("@nestjs/jwt");
 const prisma_service_1 = require("../../prisma/prisma.service");
 const bcrypt = __importStar(require("bcrypt"));
 const uuid_1 = require("uuid");
-const client_1 = require("@prisma/client");
 let AuthService = class AuthService {
     prisma;
     jwtService;
     constructor(prisma, jwtService) {
         this.prisma = prisma;
         this.jwtService = jwtService;
-    }
-    async register(dto) {
-        const existing = await this.prisma.user.findUnique({
-            where: { email: dto.email },
-        });
-        if (existing)
-            throw new common_1.ConflictException('Email already registered');
-        const hashedPassword = await bcrypt.hash(dto.password, 12);
-        const user = await this.prisma.user.create({
-            data: {
-                email: dto.email,
-                name: dto.name,
-                password: hashedPassword,
-                role: dto.role || client_1.Role.PARENT,
-            },
-        });
-        const tokens = await this.generateTokens(user.id, user.email, user.role);
-        return { user: this.sanitizeUser(user), ...tokens };
     }
     async login(dto) {
         const user = await this.prisma.user.findUnique({
