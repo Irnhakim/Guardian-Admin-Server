@@ -1,115 +1,206 @@
 # Guardian Admin Server & Dashboard
 
-The backend API server and parent control panel for the **Guardian Parental Control System**. Built with NestJS (backend) and Next.js (dashboard UI), it acts as the centralized broker that gathers, processes, and presents real-time data synced from the child's Android device.
+<p align="center">
+  <b>Centralized Backend Server, WebSocket Broker & Modern Parent Control Dashboard</b><br />
+  Real-time tracking, remote device management, screen time analytics, and notification stream for the Guardian ecosystem.
+</p>
 
-> [!IMPORTANT]
-> **Interdependency Note**: This project requires the companion [Guardian Mobile Client](https://github.com/Irnhakim/Guardian-Mobile-Client) app to be running on the child's device in order to gather, synchronize, and display device status logs in real-time.
-
-GitHub Repository: [https://github.com/Irnhakim/Guardian-Admin-Server](https://github.com/Irnhakim/Guardian-Admin-Server)
+<p align="center">
+  <img src="https://img.shields.io/badge/Backend-NestJS%2010-E0234E?logo=nestjs&logoColor=white" alt="NestJS" />
+  <img src="https://img.shields.io/badge/Dashboard-Next.js%2016%20(Turbopack)-black?logo=next.js&logoColor=white" alt="Next.js" />
+  <img src="https://img.shields.io/badge/Database-PostgreSQL%20%2B%20Prisma-2D3748?logo=prisma&logoColor=white" alt="Prisma" />
+  <img src="https://img.shields.io/badge/Styling-Tailwind%20CSS%20v4-38B2AC?logo=tailwindcss&logoColor=white" alt="Tailwind CSS" />
+  <img src="https://img.shields.io/badge/Realtime-Socket.IO-010101?logo=socketdotio&logoColor=white" alt="Socket.IO" />
+</p>
 
 ---
 
-## Architecture Overview
+> [!IMPORTANT]
+> **Companion Application**: This system requires the [Guardian Mobile Client](https://github.com/Irnhakim/Guardian-Mobile-Client) Android app running on the monitored device to receive telemetries, location fixes, and sync alerts.
+
+---
+
+## 🧭 About The Project
+
+**Guardian Admin Server & Dashboard** is the command center for parents. It acts as both:
+1. **The Backend REST & Realtime Broker (`src`)**: High-performance NestJS application communicating with PostgreSQL via Prisma ORM and maintaining bi-directional WebSocket connections with mobile devices and browser dashboards.
+2. **The Parent Control Dashboard (`dashboard`)**: Fully responsive web application built on Next.js (App Router) and Tailwind CSS v4, optimized for desktop monitors, tablets, and mobile smartphones.
+
+---
+
+## 🏗️ Architecture
 
 ```mermaid
-graph TD
-    Parent[Parent Browser / Dashboard] <-->|Socket.io WebSockets / HTTPS| Backend[NestJS Admin Server]
-    Backend <-->|Prisma ORM| DB[(PostgreSQL Database)]
-    ChildDevice[Child Android Device] --->|HTTPS REST API| Backend
-    Backend -.->|Socket.io Force Sync| ChildDevice
+flowchart TD
+    subgraph Client [Monitored Android Phone]
+        App[Guardian Mobile Client]
+    end
+
+    subgraph Server [Backend Gateway - Port 3001]
+        Nest[NestJS API Server]
+        Gateway[Socket.IO Gateway]
+        DB[(PostgreSQL / Prisma)]
+    end
+
+    subgraph Parent [Parent Control Panel - Port 3000]
+        Web[Next.js Responsive Dashboard]
+    end
+
+    App <-->|REST API / HTTPS| Nest
+    App <-->|WebSocket: /guardian| Gateway
+    Nest <--> DB
+    Gateway <-->|WebSocket: /guardian| Web
+    Web <-->|REST API / TanStack Query| Nest
 ```
 
 ---
 
-## Core Features
+## ✨ Core Features
 
-### 💻 Parent Dashboard (`dashboard`)
-* **Real-time Map Tracking**: High-accuracy location mapping using Leaflet and Fused Location.
-* **Notification Stream**: Intercepts notifications on the child's device in real-time, displays them in a modern chat-like feed, and supports full-text search.
-* **Apps Monitoring**: Displays a synchronized list of all installed system and third-party apps on the child's phone.
-* **App Usage Analytics**: Screen time stats (daily and 7-day aggregates) represented in responsive charts.
-* **Live Status Monitoring**: Monitors battery state (charging status, temperature, voltage) and online/offline status in real-time.
-* **Remote Trigger (Force Sync)**: Send immediate WebSocket request to wake up the child device's workers for real-time synchronization.
+### 💻 Parent Dashboard
+* **📱 Fully Responsive Mobile-First UI**:
+  * Slide-in navigation drawer with backdrop blur and hamburger toggle on small screens.
+  * Adaptive metric grids and scrollable device selectors designed for thumb-friendly mobile operation.
+* **📍 Live Location & History**:
+  * Real-time GPS plotting powered by Leaflet and OpenStreetMap.
+  * Instant *"Request Position Now"* button to force real-time GPS coordinate acquisition from the child's phone in under 2 seconds.
+* **🔔 Compact Notification Feed & Advanced Filter**:
+  * Modern single-line inbox layout with ellipsis auto-truncation and relative timestamps.
+  * Live full-text search across sender names, notification titles, and message bodies.
+  * Dynamic app filter dropdown (WhatsApp, Telegram, Instagram, SMS, etc.).
+  * Quick category tabs: **Pesan / Chat**, **Email**, **Belanja / Promo**, and **Semua**.
+* **⏱️ Screen Time & App Usage**:
+  * Visual Bar Chart telemetry showing daily screen time consumption per application.
+  * Targeted sync button to fetch the latest usage stats on demand.
+* **🛡️ Remote Device Rules & Security**:
+  * **Screen Lockout**: Trigger full-screen device lockouts with custom unlock passwords.
+  * **Pop-up Messaging**: Send remote reminder alerts directly to the child's screen.
+  * **Stealth Toggle**: Hide or reveal the Guardian launcher icon on the child's home screen.
+  * **Anti-Uninstall Toggle**: Remotely enable or disable Accessibility Guard and Device Admin permissions.
+* **📦 Outside APK Installation Approvals**:
+  * Intercepts new app installations outside Google Play Store.
+  * Remote **Approve** or **Reject** decisions pushed instantly back to the device.
 
-### ⚙️ NestJS API & WebSocket Server (`src`)
-* **Endpoints**: Auth, Devices management, Battery status tracking, Fused Location mapping, Apps logs, Notification log history, and System rules.
-* **Security & Auth**: Secure routes protected by Passport JWT strategy, including rotating single refresh token logic per parent user.
-* **WebSockets Gateway**: Uses `socket.io` to manage parent/child channels and broadcast instant updates in real-time.
+### ⚙️ Backend API & WebSocket Broker
+* **Dual Device Identifier Routing**: Routes socket events seamlessly across both database internal UUIDs and physical hardware identifiers (`deviceId`).
+* **Targeted Push Pings**: Relay specific ping targets (`location`, `battery`, `apps`, `usage`, `permissions`) to reduce child device battery usage.
+* **Prisma In-Place Updates**: Prevents database bloat by updating latest states (Battery, Location) in-place while keeping historical logs trimmed.
+* **JWT & Refresh Token Rotation**: Protected endpoints with Passport.js strategy and automatic refresh token recycling.
 
 ---
 
-## Database Storage & Clean Up Logic
+## 🛠️ Tech Stack
 
-To maintain a lightweight database and optimal server performance:
-1. **Single-State Persistence**: Stores exactly **one** record per device for the current **Location** and **Battery Log**, updating fields in-place on new updates to prevent database bloat.
-2. **Clean App Sync**: Uninstalled apps are completely pruned (`deleteMany`) from the database, along with its cascade-linked daily usage stats.
-3. **Rotated Refresh Tokens**: Purges all old refresh tokens for a user when generating new tokens, keeping a maximum of one active session refresh token.
-4. **Notification Pruning Rules**: Notification records are automatically pruned and deleted from the database once they are older than **7 days**.
+### Backend (`/`)
+* **Framework**: NestJS 10
+* **ORM**: Prisma 5
+* **Database**: PostgreSQL
+* **WebSockets**: `@nestjs/websockets` with `socket.io` (v4)
+* **Auth**: Passport-JWT, bcrypt
+
+### Frontend Dashboard (`/dashboard`)
+* **Framework**: Next.js 16 (Turbopack, App Router)
+* **Styling**: Tailwind CSS v4, Lucide Icons
+* **Data Fetching**: TanStack React Query v5, Axios
+* **Maps**: Leaflet, React-Leaflet
+* **Charts**: Recharts
+* **Realtime**: Socket.IO Client (v4)
 
 ---
 
-## Tech Stack
+## 📋 System Requirements
 
-* **Backend Framework**: NestJS, TypeScript, Prisma ORM, PostgreSQL, Socket.io WebSockets, Passport.js.
-* **Parent Dashboard**: Next.js (App Router), Tailwind CSS (v4), Socket.io Client, Lucide React, Recharts, TanStack React Query.
+* **Node.js**: v18.17.0 or higher (v20+ recommended)
+* **npm** or **yarn** / **pnpm**
+* **PostgreSQL**: v14 or higher (local or managed cloud like Supabase / Neon)
 
 ---
 
-## Installation & Setup Guide
+## 🚀 Installation & Setup
 
-### Prerequisites
-* Node.js (v18 or higher)
-* PostgreSQL database instance
-
-### Step 1: Clone and install dependencies
+### Step 1: Clone the Repository
 ```bash
 git clone https://github.com/Irnhakim/Guardian-Admin-Server.git
 cd Guardian-Admin-Server
+```
+
+### Step 2: Configure Server Environment
+Install backend dependencies:
+```bash
 npm install
 ```
 
-### Step 2: Configure Environment Variables
-Create a `.env` file in the root of the server:
+Create a `.env` file in the root directory:
 ```env
-DATABASE_URL="postgresql://username:password@localhost:5432/guardian_db?schema=public"
-JWT_SECRET="your_secure_jwt_secret"
-FRONTEND_URL="http://localhost:3000"
+# Database connection
+DATABASE_URL="postgresql://postgres:postgres@localhost:5432/guardian_db?schema=public"
+
+# Security
+JWT_SECRET="generate_a_strong_random_secret_here"
+JWT_EXPIRES_IN="15m"
+REFRESH_TOKEN_EXPIRES_IN="7d"
+
+# Server Ports & CORS
 PORT=3001
+FRONTEND_URL="http://localhost:3000"
 ```
 
-### Step 3: Database Setup
-Run Prisma migrations to prepare the database schemas:
+### Step 3: Run Database Migrations
+Generate Prisma client and run initial database schema migration:
 ```bash
-npx prisma migrate dev
+npx prisma migrate dev --name init
 ```
-*(Optional: Run `npm run db:seed` to add test data if needed)*
 
-### Step 4: Run the Backend API Server
-```bash
-npm run start:dev
-```
-The NestJS API will now be running on `http://localhost:3001`.
-
-### Step 5: Run the Next.js Dashboard
-Navigate into the dashboard subdirectory, install dependencies, and run the development server:
+### Step 4: Configure Dashboard Environment
+Navigate to the `dashboard` directory:
 ```bash
 cd dashboard
 npm install
-npm run dev
 ```
-Open `http://localhost:3000` in your web browser.
+
+Create a `.env.local` file inside `dashboard/`:
+```env
+NEXT_PUBLIC_API_URL="http://localhost:3001/api/v1"
+NEXT_PUBLIC_WS_URL="http://localhost:3001"
+```
 
 ---
 
-## API Endpoints Summary
+## 🏃 Running the Application
 
-| Endpoint | Method | Description | Auth Required |
-| --- | --- | --- | --- |
-| `/v1/auth/register` | `POST` | Register a new Parent account | No |
-| `/v1/auth/login` | `POST` | Authenticate and obtain JWT access & refresh tokens | No |
-| `/v1/auth/refresh` | `POST` | Rotate and refresh JWT token | No |
-| `/v1/devices/register` | `POST` | Register/Update a child device | Yes |
-| `/v1/devices/:deviceId/battery` | `POST` | Log battery reading | Yes |
-| `/v1/devices/:deviceId/location` | `POST` | Log location coordinates | Yes |
-| `/v1/devices/:deviceId/apps` | `POST` | Sync child's installed app list | Yes |
-| `/v1/devices/:deviceId/notifications` | `POST` / `GET` / `DELETE` | Log, fetch history, and clear notifications | Yes |
+### Development Mode
+
+**Terminal 1 — Backend NestJS:**
+```bash
+# In Guardian-Admin-Server root
+npm run start:dev
+```
+*Backend API will run at `http://localhost:3001`*
+
+**Terminal 2 — Next.js Dashboard:**
+```bash
+# In Guardian-Admin-Server/dashboard
+npm run dev
+```
+*Parent Dashboard will run at `http://localhost:3000`*
+
+### Production Build
+
+**Backend:**
+```bash
+npm run build
+npm run start:prod
+```
+
+**Dashboard:**
+```bash
+cd dashboard
+npm run build
+npm run start
+```
+
+---
+
+## 📄 License
+
+This project is licensed under the MIT License — see the [LICENSE](LICENSE) file for details.
