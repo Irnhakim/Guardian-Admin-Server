@@ -3,9 +3,10 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
-import { BarChart2, Clock, Smartphone } from "lucide-react";
+import { BarChart2, Clock, Smartphone, RefreshCw } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from "recharts";
 import { DeviceSelector } from "@/components/DeviceSelector";
+import { useSocket } from "@/hooks/useSocket";
 
 function formatMs(ms: number) {
   if (!ms) return "0m";
@@ -15,7 +16,9 @@ function formatMs(ms: number) {
 }
 
 export default function UsagePage() {
+  const socket = useSocket();
   const [selectedDeviceId, setSelectedDeviceId] = useState<string>("");
+  const [isSyncing, setIsSyncing] = useState(false);
 
   const { data: devices = [] } = useQuery({
     queryKey: ["devices"],
@@ -37,13 +40,34 @@ export default function UsagePage() {
     minutes: Math.round((u.totalUsageMs || 0) / 60000),
   }));
 
+  const handleSyncUsage = () => {
+    if (!socket || !activeDevice) return;
+    setIsSyncing(true);
+    socket.emit("ping_device", { deviceId: activeDevice.deviceId, target: "usage" });
+    setTimeout(() => setIsSyncing(false), 2000);
+  };
+
   return (
     <div className="p-6 space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold" style={{ color: "var(--text-primary)" }}>Screen Time & Penggunaan Aplikasi</h1>
-        <p className="text-sm mt-0.5" style={{ color: "var(--text-muted)" }}>
-          Analisis durasi pemakaian aplikasi selama 7 hari terakhir
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold" style={{ color: "var(--text-primary)" }}>Screen Time & Penggunaan Aplikasi</h1>
+          <p className="text-sm mt-0.5" style={{ color: "var(--text-muted)" }}>
+            Analisis durasi pemakaian aplikasi selama 7 hari terakhir
+          </p>
+        </div>
+        {activeDevice && (
+          <button
+            onClick={handleSyncUsage}
+            disabled={activeDevice.status !== "ONLINE" || isSyncing}
+            className={`btn-primary flex items-center gap-2 text-xs py-2 px-3.5 ${
+              (activeDevice.status !== "ONLINE" || isSyncing) ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
+            }`}
+          >
+            <RefreshCw size={13} className={isSyncing ? "animate-spin" : ""} />
+            {isSyncing ? "Menyinkronkan..." : "Sync Screen Time"}
+          </button>
+        )}
       </div>
 
       <DeviceSelector

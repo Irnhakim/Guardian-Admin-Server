@@ -4,14 +4,17 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import dynamic from "next/dynamic";
 import { api } from "@/lib/api";
-import { MapPin, Navigation, Smartphone, Clock } from "lucide-react";
+import { MapPin, Navigation, Smartphone, Clock, RefreshCw } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { DeviceSelector } from "@/components/DeviceSelector";
+import { useSocket } from "@/hooks/useSocket";
 
 const LocationMap = dynamic(() => import("@/components/LocationMap"), { ssr: false });
 
 export default function LocationPage() {
+  const socket = useSocket();
   const [selectedDeviceId, setSelectedDeviceId] = useState<string>("");
+  const [isSyncing, setIsSyncing] = useState(false);
 
   const { data: devices = [] } = useQuery({
     queryKey: ["devices"],
@@ -34,13 +37,34 @@ export default function LocationPage() {
     enabled: !!deviceIdentifier,
   });
 
+  const handleSyncLocation = () => {
+    if (!socket || !activeDevice) return;
+    setIsSyncing(true);
+    socket.emit("ping_device", { deviceId: activeDevice.deviceId, target: "location" });
+    setTimeout(() => setIsSyncing(false), 2000);
+  };
+
   return (
     <div className="p-6 space-y-5">
-      <div>
-        <h1 className="text-2xl font-bold" style={{ color: "var(--text-primary)" }}>Lokasi Real-time</h1>
-        <p className="text-sm mt-0.5" style={{ color: "var(--text-muted)" }}>
-          Pantau posisi GPS dan jejak rute perangkat anak secara akurat
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold" style={{ color: "var(--text-primary)" }}>Lokasi Real-time</h1>
+          <p className="text-sm mt-0.5" style={{ color: "var(--text-muted)" }}>
+            Pantau posisi GPS dan jejak rute perangkat anak secara akurat
+          </p>
+        </div>
+        {activeDevice && (
+          <button
+            onClick={handleSyncLocation}
+            disabled={activeDevice.status !== "ONLINE" || isSyncing}
+            className={`btn-primary flex items-center gap-2 text-xs py-2 px-3.5 ${
+              (activeDevice.status !== "ONLINE" || isSyncing) ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
+            }`}
+          >
+            <RefreshCw size={13} className={isSyncing ? "animate-spin" : ""} />
+            {isSyncing ? "Meminta GPS..." : "Minta Posisi Sekarang"}
+          </button>
+        )}
       </div>
 
       <DeviceSelector

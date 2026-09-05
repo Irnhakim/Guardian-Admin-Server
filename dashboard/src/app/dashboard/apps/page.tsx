@@ -3,13 +3,16 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
-import { Shield, Smartphone, Search, CheckCircle, Clock } from "lucide-react";
+import { Shield, Smartphone, Search, CheckCircle, Clock, RefreshCw } from "lucide-react";
 import { DeviceSelector } from "@/components/DeviceSelector";
+import { useSocket } from "@/hooks/useSocket";
 
 export default function AppsPage() {
+  const socket = useSocket();
   const [selectedDeviceId, setSelectedDeviceId] = useState<string>("");
   const [searchTerm, setSearchTerm] = useState("");
   const [activeSubTab, setActiveSubTab] = useState<"installed" | "approvals">("installed");
+  const [isSyncing, setIsSyncing] = useState(false);
 
   const { data: devices = [] } = useQuery({
     queryKey: ["devices"],
@@ -40,17 +43,38 @@ export default function AppsPage() {
     }
   };
 
+  const handleSyncApps = () => {
+    if (!socket || !activeDevice) return;
+    setIsSyncing(true);
+    socket.emit("ping_device", { deviceId: activeDevice.deviceId, target: "apps" });
+    setTimeout(() => setIsSyncing(false), 2000);
+  };
+
   const filteredApps = apps.filter((app: any) =>
     (app.appName || app.packageName).toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
     <div className="p-6 space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold" style={{ color: "var(--text-primary)" }}>Manajemen Aplikasi</h1>
-        <p className="text-sm mt-0.5" style={{ color: "var(--text-muted)" }}>
-          Daftar aplikasi terpasang dan persetujuan instalasi APK luar
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold" style={{ color: "var(--text-primary)" }}>Manajemen Aplikasi</h1>
+          <p className="text-sm mt-0.5" style={{ color: "var(--text-muted)" }}>
+            Daftar aplikasi terpasang dan persetujuan instalasi APK luar
+          </p>
+        </div>
+        {activeDevice && (
+          <button
+            onClick={handleSyncApps}
+            disabled={activeDevice.status !== "ONLINE" || isSyncing}
+            className={`btn-primary flex items-center gap-2 text-xs py-2 px-3.5 ${
+              (activeDevice.status !== "ONLINE" || isSyncing) ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
+            }`}
+          >
+            <RefreshCw size={13} className={isSyncing ? "animate-spin" : ""} />
+            {isSyncing ? "Menyinkronkan..." : "Sync Aplikasi"}
+          </button>
+        )}
       </div>
 
       <DeviceSelector

@@ -446,9 +446,19 @@ export default function DeviceDetailPage() {
                 <ShieldCheck size={18} style={{ color: "var(--accent)" }} />
                 <span className="font-semibold text-sm" style={{ color: "var(--text-primary)" }}>Status Izin & Hak Akses Sistem (Permissions)</span>
               </div>
-              <span className="text-xs" style={{ color: "var(--text-muted)" }}>
-                Diperbarui otomatis saat sinkronisasi
-              </span>
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => handleForceSync("permissions")}
+                  disabled={!isOnline || isSyncing}
+                  className="flex items-center gap-1 text-xs px-2.5 py-1 rounded bg-[rgba(92,124,250,0.15)] text-[var(--accent)] font-medium hover:opacity-90 cursor-pointer"
+                >
+                  <RefreshCw size={12} className={isSyncing ? "animate-spin" : ""} />
+                  Sync Izin Realtime
+                </button>
+                <span className="text-xs" style={{ color: "var(--text-muted)" }}>
+                  Diperbarui otomatis saat sinkronisasi
+                </span>
+              </div>
             </div>
 
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
@@ -593,10 +603,18 @@ export default function DeviceDetailPage() {
       {/* ── APPS TAB ─────────────────────────────────── */}
       {activeTab === "Apps" && (
         <div className="glass-card overflow-hidden">
-          <div className="p-4 border-b" style={{ borderColor: "var(--border)" }}>
+          <div className="p-4 border-b flex items-center justify-between" style={{ borderColor: "var(--border)" }}>
             <p className="font-medium" style={{ color: "var(--text-primary)" }}>
               Installed Apps ({apps.length})
             </p>
+            <button
+              onClick={() => handleForceSync("apps")}
+              disabled={!isOnline || isSyncing}
+              className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg bg-[rgba(92,124,250,0.15)] text-[var(--accent)] font-medium hover:opacity-90 cursor-pointer"
+            >
+              <RefreshCw size={13} className={isSyncing ? "animate-spin" : ""} />
+              Sync Apps Realtime
+            </button>
           </div>
           <div className="divide-y" style={{ borderColor: "var(--border)" }}>
             {apps.map((app: any) => (
@@ -833,6 +851,16 @@ export default function DeviceDetailPage() {
       {/* ── LOCATION TAB ─────────────────────────────── */}
       {activeTab === "Location" && (
         <div className="space-y-4">
+          <div className="flex justify-end">
+            <button
+              onClick={() => handleForceSync("location")}
+              disabled={!isOnline || isSyncing}
+              className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg bg-[rgba(16,185,129,0.15)] text-[#10b981] font-medium hover:opacity-90 cursor-pointer"
+            >
+              <RefreshCw size={13} className={isSyncing ? "animate-spin" : ""} />
+              Minta Lokasi GPS Sekarang
+            </button>
+          </div>
           {currentLocation ? (
             <>
               <div className="glass-card p-4 flex items-center gap-4">
@@ -867,7 +895,17 @@ export default function DeviceDetailPage() {
       {activeTab === "Usage" && (
         <div className="space-y-4">
           <div className="glass-card p-4">
-            <p className="font-medium mb-4" style={{ color: "var(--text-primary)" }}>Top Apps — Last 7 Days</p>
+            <div className="flex items-center justify-between mb-4">
+              <p className="font-medium" style={{ color: "var(--text-primary)" }}>Top Apps — Last 7 Days</p>
+              <button
+                onClick={() => handleForceSync("usage")}
+                disabled={!isOnline || isSyncing}
+                className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg bg-[rgba(92,124,250,0.15)] text-[var(--accent)] font-medium hover:opacity-90 cursor-pointer"
+              >
+                <RefreshCw size={13} className={isSyncing ? "animate-spin" : ""} />
+                Sync Screen Time Realtime
+              </button>
+            </div>
             {usage.length === 0 ? (
               <p className="text-sm text-center py-6" style={{ color: "var(--text-muted)" }}>No usage data yet</p>
             ) : (
