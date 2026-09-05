@@ -118,6 +118,12 @@ let GuardianGateway = GuardianGateway_1 = class GuardianGateway {
             deviceId: payload.deviceId,
             location: payload.data,
         });
+        if (payload.hardwareDeviceId) {
+            this.server.to('dashboard').emit('location:update', {
+                deviceId: payload.hardwareDeviceId,
+                location: payload.data,
+            });
+        }
     }
     handleNotificationReceived(payload) {
         this.server.to('dashboard').emit('notification:received', {

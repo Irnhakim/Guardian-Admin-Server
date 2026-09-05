@@ -58,6 +58,7 @@ let LocationsService = class LocationsService {
         }
         this.eventEmitter.emit('location.updated', {
             deviceId: device.id,
+            hardwareDeviceId: device.deviceId,
             data: location,
         });
         this.eventEmitter.emit('geofence.check', {

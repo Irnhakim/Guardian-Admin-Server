@@ -50,6 +50,7 @@ export class LocationsService {
     // Emit for real-time WebSocket updates
     this.eventEmitter.emit('location.updated', {
       deviceId: device.id,
+      hardwareDeviceId: device.deviceId,
       data: location,
     });
 

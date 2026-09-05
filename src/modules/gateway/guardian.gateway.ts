@@ -147,11 +147,17 @@ export class GuardianGateway
   }
 
   @OnEvent('location.updated')
-  handleLocationUpdate(payload: { deviceId: string; data: any }) {
+  handleLocationUpdate(payload: { deviceId: string; hardwareDeviceId?: string; data: any }) {
     this.server.to('dashboard').emit('location:update', {
       deviceId: payload.deviceId,
       location: payload.data,
     });
+    if (payload.hardwareDeviceId) {
+      this.server.to('dashboard').emit('location:update', {
+        deviceId: payload.hardwareDeviceId,
+        location: payload.data,
+      });
+    }
   }
 
   @OnEvent('notification.received')

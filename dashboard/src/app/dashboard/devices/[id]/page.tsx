@@ -170,7 +170,7 @@ export default function DeviceDetailPage() {
     enabled: !!device,
   });
 
-  const { data: location } = useQuery({
+  const { data: location, refetch: refetchLocation } = useQuery({
     queryKey: ["location", id],
     queryFn: () => api.get(`/devices/${device?.deviceId}/location/latest`).then((r) => r.data),
     enabled: !!device,
@@ -232,6 +232,7 @@ export default function DeviceDetailPage() {
     socket.on("location:update", (payload: { deviceId: string; location: any }) => {
       if (payload.deviceId === targetId || payload.deviceId === hardwareId) {
         setLiveLocation(payload.location);
+        refetchLocation();
       }
     });
     socket.on("apps:synced", (payload: { deviceId: string }) => {
@@ -275,7 +276,7 @@ export default function DeviceDetailPage() {
       socket.off("protection:changed");
       socket.off("device:permissions");
     };
-  }, [socket, device, refetchApps, refetchDevice, refetchUsage, refetchNotifications, refetchApprovals]);
+  }, [socket, device, refetchLocation, refetchApps, refetchDevice, refetchUsage, refetchNotifications, refetchApprovals]);
 
   const handleForceSync = (target: "all" | "battery" | "location" | "apps" | "usage" | "permissions" = "all") => {
     if (!socket || !device) return;

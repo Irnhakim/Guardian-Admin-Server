@@ -59,6 +59,7 @@ export declare class GuardianGateway implements OnGatewayConnection, OnGatewayDi
     }): void;
     handleLocationUpdate(payload: {
         deviceId: string;
+        hardwareDeviceId?: string;
         data: any;
     }): void;
     handleNotificationReceived(payload: {
