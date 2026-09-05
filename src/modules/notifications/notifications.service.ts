@@ -11,7 +11,9 @@ export class NotificationsService {
   ) {}
 
   async log(deviceId: string, dto: CreateNotificationDto) {
-    const device = await this.prisma.device.findUnique({ where: { deviceId } });
+    const device = await this.prisma.device.findFirst({
+      where: { OR: [{ deviceId }, { id: deviceId }] },
+    });
     if (!device) throw new NotFoundException('Device not found');
 
     // Auto-prune notifications older than 7 days for this device
@@ -45,7 +47,9 @@ export class NotificationsService {
   }
 
   async getHistory(deviceId: string, limit = 50) {
-    const device = await this.prisma.device.findUnique({ where: { deviceId } });
+    const device = await this.prisma.device.findFirst({
+      where: { OR: [{ deviceId }, { id: deviceId }] },
+    });
     if (!device) throw new NotFoundException('Device not found');
 
     // Also auto-prune when fetching history to keep DB clean
@@ -66,7 +70,9 @@ export class NotificationsService {
   }
 
   async clearNotifications(deviceId: string) {
-    const device = await this.prisma.device.findUnique({ where: { deviceId } });
+    const device = await this.prisma.device.findFirst({
+      where: { OR: [{ deviceId }, { id: deviceId }] },
+    });
     if (!device) throw new NotFoundException('Device not found');
 
     return this.prisma.appNotification.deleteMany({

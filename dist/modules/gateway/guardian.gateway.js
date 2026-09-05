@@ -91,6 +91,17 @@ let GuardianGateway = GuardianGateway_1 = class GuardianGateway {
         this.server.to(`device:${data.deviceId}`).emit('app:show');
         return { event: 'app_shown', deviceId: data.deviceId };
     }
+    handleSetProtection(data) {
+        this.logger.log(`Setting anti-uninstall protection for device ${data.deviceId} -> ${data.enabled}`);
+        this.server.to(`device:${data.deviceId}`).emit('protection:set', {
+            enabled: data.enabled,
+        });
+        this.server.to('dashboard').emit('protection:changed', {
+            deviceId: data.deviceId,
+            enabled: data.enabled,
+        });
+        return { event: 'protection_updated', deviceId: data.deviceId, enabled: data.enabled };
+    }
     handleBatteryUpdate(payload) {
         this.server.to('dashboard').emit('battery:update', {
             deviceId: payload.deviceId,
@@ -194,6 +205,13 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", void 0)
 ], GuardianGateway.prototype, "handleShowApp", null);
+__decorate([
+    (0, websockets_1.SubscribeMessage)('set_protection'),
+    __param(0, (0, websockets_1.MessageBody)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", void 0)
+], GuardianGateway.prototype, "handleSetProtection", null);
 __decorate([
     (0, event_emitter_1.OnEvent)('battery.updated'),
     __metadata("design:type", Function),

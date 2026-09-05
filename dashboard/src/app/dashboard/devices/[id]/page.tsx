@@ -67,6 +67,26 @@ export default function DeviceDetailPage() {
   const [isSendingMsg, setIsSendingMsg] = useState(false);
   const [isAppHidden, setIsAppHidden] = useState(false);
   const [isTogglingVisibility, setIsTogglingVisibility] = useState(false);
+  const [isProtectionActive, setIsProtectionActive] = useState(true);
+  const [isTogglingProtection, setIsTogglingProtection] = useState(false);
+
+  const handleToggleProtection = () => {
+    if (!socket || !device) return;
+    const targetState = !isProtectionActive;
+    if (!targetState) {
+      const confirmDeactivate = window.confirm(
+        "Nonaktifkan proteksi anti-uninstall?\n\nIni akan mencabut Device Admin dan menonaktifkan Accessibility Guard secara remote sehingga aplikasi Guardian dapat di-uninstall di HP anak."
+      );
+      if (!confirmDeactivate) return;
+    }
+    setIsTogglingProtection(true);
+    socket.emit("set_protection", {
+      deviceId: device.deviceId,
+      enabled: targetState,
+    });
+    setIsProtectionActive(targetState);
+    setTimeout(() => setIsTogglingProtection(false), 1000);
+  };
 
   const handleToggleAppVisibility = () => {
     if (!socket || !device) return;
@@ -138,9 +158,10 @@ export default function DeviceDetailPage() {
     }
   };
 
-  const { data: device, refetch: refetchDevice } = useQuery({
+  const { data: device, refetch: refetchDevice, isError } = useQuery({
     queryKey: ["device", id],
     queryFn: () => api.get(`/devices/${id}`).then((r) => r.data),
+    retry: false,
   });
 
   const { data: battery } = useQuery({
@@ -234,6 +255,11 @@ export default function DeviceDetailPage() {
         refetchApprovals();
       }
     });
+    socket.on("protection:changed", (payload: { deviceId: string; enabled: boolean }) => {
+      if (payload.deviceId === targetId || payload.deviceId === hardwareId) {
+        setIsProtectionActive(payload.enabled);
+      }
+    });
     return () => {
       socket.off("battery:update");
       socket.off("location:update");
@@ -241,6 +267,7 @@ export default function DeviceDetailPage() {
       socket.off("usage:synced");
       socket.off("notification:received");
       socket.off("approval:requested");
+      socket.off("protection:changed");
     };
   }, [socket, device, refetchApps, refetchDevice, refetchUsage, refetchNotifications, refetchApprovals]);
 
@@ -256,6 +283,23 @@ export default function DeviceDetailPage() {
   const isOnline = device?.status === "ONLINE";
 
   if (!device) {
+    if (isError) {
+      return (
+        <div className="p-6 flex items-center justify-center h-full">
+          <div className="glass-card p-8 text-center max-w-md">
+            <Smartphone size={40} className="mx-auto mb-3" style={{ color: "var(--text-muted)" }} />
+            <h2 className="text-lg font-bold mb-2" style={{ color: "var(--text-primary)" }}>Device Not Found</h2>
+            <p className="text-sm mb-4" style={{ color: "var(--text-muted)" }}>
+              Perangkat ini belum terdaftar di database atau telah dihapus.
+            </p>
+            <Link href="/dashboard" className="btn-primary inline-flex">
+              <ChevronLeft size={16} /> Kembali ke Dashboard
+            </Link>
+          </div>
+        </div>
+      );
+    }
+
     return (
       <div className="p-6 flex items-center justify-center h-full">
         <div className="text-center">
@@ -811,6 +855,47 @@ export default function DeviceDetailPage() {
               </span>
             </div>
           ))}
+
+          {/* Anti-Uninstall Remote Control */}
+          <div className="border-t pt-5 mt-5" style={{ borderColor: "rgba(99,102,241,0.2)" }}>
+            <p className="font-medium mb-1" style={{ color: "var(--text-primary)" }}>Anti-Uninstall & Admin Protection</p>
+            <p className="text-xs mb-4" style={{ color: "var(--text-muted)" }}>
+              Kendalikan proteksi penghapusan aplikasi dari jauh. Jika proteksi dimatikan, Device Admin dicabut otomatis dan Accessibility Guard mengizinkan akses menu Settings/Uninstall di HP anak.
+            </p>
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs"
+                style={{
+                  background: isProtectionActive ? "rgba(16,185,129,0.08)" : "rgba(239,68,68,0.08)",
+                  border: `1px solid ${isProtectionActive ? "rgba(16,185,129,0.25)" : "rgba(239,68,68,0.25)"}`,
+                  color: isProtectionActive ? "#10b981" : "#ef4444",
+                }}>
+                <Shield size={13} />
+                <span className="font-medium">{isProtectionActive ? "Proteksi Aktif (Terkunci)" : "Proteksi Mati (Bisa Dihapus)"}</span>
+              </div>
+              <button
+                id="btn-toggle-protection"
+                onClick={handleToggleProtection}
+                disabled={isTogglingProtection || !device}
+                className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold transition-all hover:opacity-90 ${
+                  isTogglingProtection ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
+                }`}
+                style={{
+                  background: isProtectionActive
+                    ? "rgba(239,68,68,0.1)"
+                    : "rgba(16,185,129,0.1)",
+                  border: `1px solid ${isProtectionActive ? "rgba(239,68,68,0.3)" : "rgba(16,185,129,0.3)"}`,
+                  color: isProtectionActive ? "#ef4444" : "#10b981",
+                }}
+              >
+                <Shield size={15} />
+                {isTogglingProtection
+                  ? "Mengirim..."
+                  : isProtectionActive
+                  ? "Buka Kunci Proteksi (Izinkan Uninstall)"
+                  : "Aktifkan Proteksi Kembali"}
+              </button>
+            </div>
+          </div>
 
           {/* App Visibility Control */}
           <div className="border-t pt-5 mt-5" style={{ borderColor: "rgba(99,102,241,0.2)" }}>

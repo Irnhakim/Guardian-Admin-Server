@@ -69,14 +69,16 @@ let LocationsService = class LocationsService {
     }
     async getLatest(deviceId) {
         return this.prisma.location.findFirst({
-            where: { device: { deviceId } },
+            where: {
+                device: { OR: [{ deviceId }, { id: deviceId }] },
+            },
             orderBy: { timestamp: 'desc' },
         });
     }
     async getHistory(deviceId, limit = 100, from, to) {
         return this.prisma.location.findMany({
             where: {
-                device: { deviceId },
+                device: { OR: [{ deviceId }, { id: deviceId }] },
                 ...(from || to
                     ? {
                         timestamp: {

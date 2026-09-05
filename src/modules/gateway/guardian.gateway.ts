@@ -118,6 +118,19 @@ export class GuardianGateway
     return { event: 'app_shown', deviceId: data.deviceId };
   }
 
+  @SubscribeMessage('set_protection')
+  handleSetProtection(@MessageBody() data: { deviceId: string; enabled: boolean }) {
+    this.logger.log(`Setting anti-uninstall protection for device ${data.deviceId} -> ${data.enabled}`);
+    this.server.to(`device:${data.deviceId}`).emit('protection:set', {
+      enabled: data.enabled,
+    });
+    this.server.to('dashboard').emit('protection:changed', {
+      deviceId: data.deviceId,
+      enabled: data.enabled,
+    });
+    return { event: 'protection_updated', deviceId: data.deviceId, enabled: data.enabled };
+  }
+
   // ── Event Listeners ──────────────────────────────────────────
 
   @OnEvent('battery.updated')

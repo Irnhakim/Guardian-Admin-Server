@@ -60,7 +60,9 @@ export class BatteryService {
 
   async getLatest(deviceId: string) {
     return this.prisma.batteryLog.findFirst({
-      where: { device: { deviceId } },
+      where: {
+        device: { OR: [{ deviceId }, { id: deviceId }] },
+      },
       orderBy: { timestamp: 'desc' },
     });
   }
@@ -68,7 +70,9 @@ export class BatteryService {
   async getHistory(deviceId: string, limit = 96) {
     // Last 96 readings = 24h at 15min intervals
     return this.prisma.batteryLog.findMany({
-      where: { device: { deviceId } },
+      where: {
+        device: { OR: [{ deviceId }, { id: deviceId }] },
+      },
       orderBy: { timestamp: 'desc' },
       take: limit,
     });

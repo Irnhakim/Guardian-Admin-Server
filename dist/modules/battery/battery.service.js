@@ -64,13 +64,17 @@ let BatteryService = class BatteryService {
     }
     async getLatest(deviceId) {
         return this.prisma.batteryLog.findFirst({
-            where: { device: { deviceId } },
+            where: {
+                device: { OR: [{ deviceId }, { id: deviceId }] },
+            },
             orderBy: { timestamp: 'desc' },
         });
     }
     async getHistory(deviceId, limit = 96) {
         return this.prisma.batteryLog.findMany({
-            where: { device: { deviceId } },
+            where: {
+                device: { OR: [{ deviceId }, { id: deviceId }] },
+            },
             orderBy: { timestamp: 'desc' },
             take: limit,
         });

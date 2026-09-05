@@ -7,23 +7,23 @@ export declare class DevicesService {
     private eventEmitter;
     constructor(prisma: PrismaService, eventEmitter: EventEmitter2);
     register(dto: RegisterDeviceDto): Promise<{
-        id: string;
         deviceId: string;
         deviceName: string;
         brand: string;
         model: string;
         androidVersion: string;
         securityPatch: string | null;
+        fcmToken: string | null;
+        id: string;
         status: import("@prisma/client").$Enums.DeviceStatus;
         lastSeen: Date | null;
         registeredAt: Date;
         updatedAt: Date;
-        fcmToken: string | null;
     }>;
     findAll(): Promise<({
         batteryLogs: {
-            id: string;
             deviceId: string;
+            id: string;
             timestamp: Date;
             level: number;
             isCharging: boolean;
@@ -35,18 +35,18 @@ export declare class DevicesService {
             alerts: number;
         };
     } & {
-        id: string;
         deviceId: string;
         deviceName: string;
         brand: string;
         model: string;
         androidVersion: string;
         securityPatch: string | null;
+        fcmToken: string | null;
+        id: string;
         status: import("@prisma/client").$Enums.DeviceStatus;
         lastSeen: Date | null;
         registeredAt: Date;
         updatedAt: Date;
-        fcmToken: string | null;
     })[]>;
     findOne(id: string): Promise<{
         _count: {
@@ -54,74 +54,74 @@ export declare class DevicesService {
             alerts: number;
         };
     } & {
-        id: string;
         deviceId: string;
         deviceName: string;
         brand: string;
         model: string;
         androidVersion: string;
         securityPatch: string | null;
+        fcmToken: string | null;
+        id: string;
         status: import("@prisma/client").$Enums.DeviceStatus;
         lastSeen: Date | null;
         registeredAt: Date;
         updatedAt: Date;
-        fcmToken: string | null;
     }>;
     findByDeviceId(deviceId: string): Promise<{
-        id: string;
         deviceId: string;
         deviceName: string;
         brand: string;
         model: string;
         androidVersion: string;
         securityPatch: string | null;
+        fcmToken: string | null;
+        id: string;
         status: import("@prisma/client").$Enums.DeviceStatus;
         lastSeen: Date | null;
         registeredAt: Date;
         updatedAt: Date;
-        fcmToken: string | null;
     }>;
     update(id: string, dto: UpdateDeviceDto): Promise<{
-        id: string;
         deviceId: string;
         deviceName: string;
         brand: string;
         model: string;
         androidVersion: string;
         securityPatch: string | null;
+        fcmToken: string | null;
+        id: string;
         status: import("@prisma/client").$Enums.DeviceStatus;
         lastSeen: Date | null;
         registeredAt: Date;
         updatedAt: Date;
-        fcmToken: string | null;
     }>;
     updateStatus(deviceId: string, status: DeviceStatus): Promise<{
-        id: string;
         deviceId: string;
         deviceName: string;
         brand: string;
         model: string;
         androidVersion: string;
         securityPatch: string | null;
+        fcmToken: string | null;
+        id: string;
         status: import("@prisma/client").$Enums.DeviceStatus;
         lastSeen: Date | null;
         registeredAt: Date;
         updatedAt: Date;
-        fcmToken: string | null;
     }>;
     heartbeat(deviceId: string): Promise<{
-        id: string;
         deviceId: string;
         deviceName: string;
         brand: string;
         model: string;
         androidVersion: string;
         securityPatch: string | null;
+        fcmToken: string | null;
+        id: string;
         status: import("@prisma/client").$Enums.DeviceStatus;
         lastSeen: Date | null;
         registeredAt: Date;
         updatedAt: Date;
-        fcmToken: string | null;
     }>;
     delete(id: string): Promise<{
         message: string;

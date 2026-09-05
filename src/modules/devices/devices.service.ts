@@ -149,7 +149,11 @@ export class DevicesService {
   }
 
   async findByDeviceId(deviceId: string) {
-    const device = await this.prisma.device.findUnique({ where: { deviceId } });
+    const device = await this.prisma.device.findFirst({
+      where: {
+        OR: [{ deviceId }, { id: deviceId }],
+      },
+    });
     if (!device) throw new NotFoundException('Device not found');
     return device;
   }

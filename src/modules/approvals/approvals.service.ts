@@ -11,7 +11,9 @@ export class ApprovalsService {
   ) {}
 
   async create(deviceId: string, dto: CreateApprovalDto) {
-    const device = await this.prisma.device.findUnique({ where: { deviceId } });
+    const device = await this.prisma.device.findFirst({
+      where: { OR: [{ deviceId }, { id: deviceId }] },
+    });
     if (!device) throw new NotFoundException('Device not found');
 
     const approval = await this.prisma.appApproval.upsert({
@@ -46,7 +48,9 @@ export class ApprovalsService {
   }
 
   async getHistory(deviceId: string) {
-    const device = await this.prisma.device.findUnique({ where: { deviceId } });
+    const device = await this.prisma.device.findFirst({
+      where: { OR: [{ deviceId }, { id: deviceId }] },
+    });
     if (!device) throw new NotFoundException('Device not found');
 
     return this.prisma.appApproval.findMany({

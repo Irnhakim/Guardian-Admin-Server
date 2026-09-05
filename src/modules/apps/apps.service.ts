@@ -11,7 +11,9 @@ export class AppsService {
   ) {}
 
   async syncApps(deviceId: string, dto: SyncAppsDto) {
-    const device = await this.prisma.device.findUnique({ where: { deviceId } });
+    const device = await this.prisma.device.findFirst({
+      where: { OR: [{ deviceId }, { id: deviceId }] },
+    });
     if (!device) throw new NotFoundException('Device not found');
 
     const incomingPackages = new Set(dto.apps.map((a) => a.packageName));
@@ -65,7 +67,7 @@ export class AppsService {
   async getApps(deviceId: string, includeSystem = false) {
     return this.prisma.installedApp.findMany({
       where: {
-        device: { deviceId },
+        device: { OR: [{ deviceId }, { id: deviceId }] },
         ...(includeSystem ? {} : { isSystemApp: false }),
       },
       orderBy: { appName: 'asc' },
@@ -73,7 +75,9 @@ export class AppsService {
   }
 
   async syncUsage(deviceId: string, dto: SyncUsageDto) {
-    const device = await this.prisma.device.findUnique({ where: { deviceId } });
+    const device = await this.prisma.device.findFirst({
+      where: { OR: [{ deviceId }, { id: deviceId }] },
+    });
     if (!device) throw new NotFoundException('Device not found');
 
     for (const usage of dto.usages) {
@@ -119,7 +123,7 @@ export class AppsService {
     const usages = await this.prisma.appUsage.groupBy({
       by: ['packageName', 'appName'],
       where: {
-        device: { deviceId },
+        device: { OR: [{ deviceId }, { id: deviceId }] },
         date: { gte: fromDate, lte: toDate },
       },
       _sum: { usageMs: true },
@@ -139,7 +143,10 @@ export class AppsService {
     day.setHours(0, 0, 0, 0);
 
     return this.prisma.appUsage.findMany({
-      where: { device: { deviceId }, date: day },
+      where: {
+        device: { OR: [{ deviceId }, { id: deviceId }] },
+        date: day,
+      },
       orderBy: { usageMs: 'desc' },
     });
   }

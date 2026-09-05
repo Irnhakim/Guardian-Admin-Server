@@ -21,7 +21,9 @@ let ApprovalsService = class ApprovalsService {
         this.eventEmitter = eventEmitter;
     }
     async create(deviceId, dto) {
-        const device = await this.prisma.device.findUnique({ where: { deviceId } });
+        const device = await this.prisma.device.findFirst({
+            where: { OR: [{ deviceId }, { id: deviceId }] },
+        });
         if (!device)
             throw new common_1.NotFoundException('Device not found');
         const approval = await this.prisma.appApproval.upsert({
@@ -53,7 +55,9 @@ let ApprovalsService = class ApprovalsService {
         return approval;
     }
     async getHistory(deviceId) {
-        const device = await this.prisma.device.findUnique({ where: { deviceId } });
+        const device = await this.prisma.device.findFirst({
+            where: { OR: [{ deviceId }, { id: deviceId }] },
+        });
         if (!device)
             throw new common_1.NotFoundException('Device not found');
         return this.prisma.appApproval.findMany({
