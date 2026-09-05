@@ -72,8 +72,10 @@ let GuardianGateway = GuardianGateway_1 = class GuardianGateway {
         return { event: 'subscribed', deviceId: data.deviceId };
     }
     handlePingDevice(data) {
-        this.server.to(`device:${data.deviceId}`).emit('force_sync');
-        return { event: 'pinged', deviceId: data.deviceId };
+        const target = data.target || 'all';
+        this.logger.log(`Force sync requested for device ${data.deviceId} (target: ${target})`);
+        this.server.to(`device:${data.deviceId}`).emit('force_sync', { target });
+        return { event: 'pinged', deviceId: data.deviceId, target };
     }
     handleSendDeviceMessage(data) {
         this.server.to(`device:${data.deviceId}`).emit('device:message', {

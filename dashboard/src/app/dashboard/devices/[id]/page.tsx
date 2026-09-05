@@ -277,10 +277,10 @@ export default function DeviceDetailPage() {
     };
   }, [socket, device, refetchApps, refetchDevice, refetchUsage, refetchNotifications, refetchApprovals]);
 
-  const handleForceSync = () => {
+  const handleForceSync = (target: "all" | "battery" | "location" | "apps" | "usage" | "permissions" = "all") => {
     if (!socket || !device) return;
     setIsSyncing(true);
-    socket.emit("ping_device", { deviceId: device.deviceId });
+    socket.emit("ping_device", { deviceId: device.deviceId, target });
     setTimeout(() => setIsSyncing(false), 2000);
   };
 
@@ -384,9 +384,19 @@ export default function DeviceDetailPage() {
         <div className="grid grid-cols-3 gap-4">
           {/* Battery card */}
           <div className="metric-card">
-            <div className="flex items-center gap-2 mb-3">
-              <Battery size={16} style={{ color: "var(--accent)" }} />
-              <span className="text-sm font-medium" style={{ color: "var(--text-secondary)" }}>Battery</span>
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <Battery size={16} style={{ color: "var(--accent)" }} />
+                <span className="text-sm font-medium" style={{ color: "var(--text-secondary)" }}>Battery</span>
+              </div>
+              <button
+                onClick={() => handleForceSync("battery")}
+                disabled={!isOnline || isSyncing}
+                title="Sync baterai realtime"
+                className="text-[11px] p-1 rounded hover:bg-[rgba(255,255,255,0.05)] text-[var(--accent)] cursor-pointer"
+              >
+                <RefreshCw size={12} className={isSyncing ? "animate-spin" : ""} />
+              </button>
             </div>
             <div className="flex items-end gap-2">
               <span className="text-4xl font-bold" style={{ color: "var(--text-primary)" }}>

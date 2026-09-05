@@ -88,10 +88,12 @@ export class GuardianGateway
 
   @SubscribeMessage('ping_device')
   handlePingDevice(
-    @MessageBody() data: { deviceId: string },
+    @MessageBody() data: { deviceId: string; target?: 'all' | 'battery' | 'location' | 'apps' | 'usage' | 'permissions' },
   ) {
-    this.server.to(`device:${data.deviceId}`).emit('force_sync');
-    return { event: 'pinged', deviceId: data.deviceId };
+    const target = data.target || 'all';
+    this.logger.log(`Force sync requested for device ${data.deviceId} (target: ${target})`);
+    this.server.to(`device:${data.deviceId}`).emit('force_sync', { target });
+    return { event: 'pinged', deviceId: data.deviceId, target };
   }
 
   @SubscribeMessage('send_device_message')

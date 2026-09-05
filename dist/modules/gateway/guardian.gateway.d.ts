@@ -18,9 +18,11 @@ export declare class GuardianGateway implements OnGatewayConnection, OnGatewayDi
     };
     handlePingDevice(data: {
         deviceId: string;
+        target?: 'all' | 'battery' | 'location' | 'apps' | 'usage' | 'permissions';
     }): {
         event: string;
         deviceId: string;
+        target: "all" | "battery" | "location" | "apps" | "usage" | "permissions";
     };
     handleSendDeviceMessage(data: {
         deviceId: string;
