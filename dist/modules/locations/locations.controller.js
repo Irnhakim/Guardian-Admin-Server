@@ -17,7 +17,6 @@ const common_1 = require("@nestjs/common");
 const swagger_1 = require("@nestjs/swagger");
 const locations_service_1 = require("./locations.service");
 const location_dto_1 = require("./dto/location.dto");
-const jwt_auth_guard_1 = require("../../common/guards/jwt-auth.guard");
 let LocationsController = class LocationsController {
     locationsService;
     constructor(locationsService) {
@@ -67,8 +66,6 @@ __decorate([
 ], LocationsController.prototype, "getHistory", null);
 exports.LocationsController = LocationsController = __decorate([
     (0, swagger_1.ApiTags)('Locations'),
-    (0, swagger_1.ApiBearerAuth)('JWT'),
-    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
     (0, common_1.Controller)({ path: 'devices/:deviceId/location', version: '1' }),
     __metadata("design:paramtypes", [locations_service_1.LocationsService])
 ], LocationsController);

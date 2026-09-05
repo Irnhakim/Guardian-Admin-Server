@@ -17,7 +17,6 @@ const common_1 = require("@nestjs/common");
 const swagger_1 = require("@nestjs/swagger");
 const apps_service_1 = require("./apps.service");
 const apps_dto_1 = require("./dto/apps.dto");
-const jwt_auth_guard_1 = require("../../common/guards/jwt-auth.guard");
 let AppsController = class AppsController {
     appsService;
     constructor(appsService) {
@@ -92,8 +91,6 @@ __decorate([
 ], AppsController.prototype, "getDailyUsage", null);
 exports.AppsController = AppsController = __decorate([
     (0, swagger_1.ApiTags)('Apps'),
-    (0, swagger_1.ApiBearerAuth)('JWT'),
-    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
     (0, common_1.Controller)({ path: 'devices/:deviceId', version: '1' }),
     __metadata("design:paramtypes", [apps_service_1.AppsService])
 ], AppsController);

@@ -1,14 +1,11 @@
 import {
-  Controller, Post, Get, Body, Param, Query, UseGuards, ParseIntPipe,
+  Controller, Post, Get, Body, Param, Query, ParseIntPipe,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiQuery } from '@nestjs/swagger';
 import { LocationsService } from './locations.service';
 import { LocationDto } from './dto/location.dto';
-import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 
 @ApiTags('Locations')
-@ApiBearerAuth('JWT')
-@UseGuards(JwtAuthGuard)
 @Controller({ path: 'devices/:deviceId/location', version: '1' })
 export class LocationsController {
   constructor(private locationsService: LocationsService) {}

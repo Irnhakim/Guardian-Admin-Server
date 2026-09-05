@@ -1,13 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter, usePathname } from "next/navigation";
+import { usePathname } from "next/navigation";
 import Link from "next/link";
-import { useAuthStore } from "@/store/auth.store";
 import { useSocket } from "@/hooks/useSocket";
 import {
   Shield, LayoutDashboard, Smartphone, MapPin,
-  BarChart2, Bell, Settings, LogOut, ChevronRight,
+  BarChart2, Bell, Settings, ChevronRight,
 } from "lucide-react";
 
 const navItems = [
@@ -21,29 +19,9 @@ const navItems = [
 ];
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const router = useRouter();
   const pathname = usePathname();
-  const { isAuthenticated, user, logout } = useAuthStore();
-  const [mounted, setMounted] = useState(false);
 
-  useSocket(); // Initialize WebSocket connection
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  useEffect(() => {
-    if (mounted && !isAuthenticated) {
-      router.push("/login");
-    }
-  }, [mounted, isAuthenticated, router]);
-
-  if (!mounted || !isAuthenticated) return null;
-
-  const handleLogout = async () => {
-    await logout();
-    router.push("/login");
-  };
+  useSocket();
 
   return (
     <div className="flex h-screen overflow-hidden" style={{ background: "var(--bg-primary)" }}>
@@ -79,29 +57,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             );
           })}
         </nav>
-
-        {/* User */}
-        <div className="p-3" style={{ borderTop: "1px solid var(--border)" }}>
-          <div className="flex items-center gap-3 p-2 rounded-lg" style={{ background: "var(--bg-card)" }}>
-            <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0"
-              style={{ background: "linear-gradient(135deg, #5c7cfa, #a78bfa)", color: "white" }}>
-              {user?.name?.[0]?.toUpperCase() ?? "P"}
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium truncate" style={{ color: "var(--text-primary)" }}>{user?.name}</p>
-              <p className="text-xs truncate" style={{ color: "var(--text-muted)" }}>{user?.role}</p>
-            </div>
-            <button
-              id="logout-btn"
-              onClick={handleLogout}
-              className="p-1.5 rounded-lg transition-colors hover:bg-white/5"
-              title="Logout"
-              style={{ color: "var(--text-muted)" }}
-            >
-              <LogOut size={15} />
-            </button>
-          </div>
-        </div>
       </aside>
 
       {/* Main */}

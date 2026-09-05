@@ -21,7 +21,7 @@ let DevicesService = class DevicesService {
         this.prisma = prisma;
         this.eventEmitter = eventEmitter;
     }
-    async register(dto, parentId) {
+    async register(dto) {
         const existing = await this.prisma.device.findUnique({
             where: { deviceId: dto.deviceId },
         });
@@ -42,7 +42,6 @@ let DevicesService = class DevicesService {
             });
             this.eventEmitter.emit('device.status', {
                 deviceId: device.id,
-                parentId: device.parentId,
                 status: 'ONLINE',
             });
             return device;
@@ -56,21 +55,18 @@ let DevicesService = class DevicesService {
                 androidVersion: dto.androidVersion,
                 securityPatch: dto.securityPatch,
                 fcmToken: dto.fcmToken,
-                parentId,
                 status: client_1.DeviceStatus.ONLINE,
                 lastSeen: new Date(),
             },
         });
         this.eventEmitter.emit('device.status', {
             deviceId: device.id,
-            parentId: device.parentId,
             status: 'ONLINE',
         });
         return device;
     }
-    async findAll(parentId) {
+    async findAll() {
         const devices = await this.prisma.device.findMany({
-            where: { parentId },
             include: {
                 _count: {
                     select: {
@@ -87,7 +83,7 @@ let DevicesService = class DevicesService {
         });
         const now = new Date();
         const threeMinutesAgo = new Date(now.getTime() - 3 * 60 * 1000);
-        const updatedDevices = await Promise.all(devices.map(async (device) => {
+        return Promise.all(devices.map(async (device) => {
             if (device.status === client_1.DeviceStatus.ONLINE &&
                 device.lastSeen &&
                 device.lastSeen < threeMinutesAgo) {
@@ -97,18 +93,16 @@ let DevicesService = class DevicesService {
                 });
                 this.eventEmitter.emit('device.status', {
                     deviceId: device.id,
-                    parentId: device.parentId,
                     status: 'OFFLINE',
                 });
                 return { ...device, status: client_1.DeviceStatus.OFFLINE };
             }
             return device;
         }));
-        return updatedDevices;
     }
-    async findOne(id, parentId) {
+    async findOne(id) {
         const device = await this.prisma.device.findFirst({
-            where: { id, parentId },
+            where: { id },
             include: {
                 _count: {
                     select: {
@@ -131,7 +125,6 @@ let DevicesService = class DevicesService {
             });
             this.eventEmitter.emit('device.status', {
                 deviceId: device.id,
-                parentId: device.parentId,
                 status: 'OFFLINE',
             });
             return { ...device, status: client_1.DeviceStatus.OFFLINE };
@@ -144,8 +137,8 @@ let DevicesService = class DevicesService {
             throw new common_1.NotFoundException('Device not found');
         return device;
     }
-    async update(id, parentId, dto) {
-        await this.findOne(id, parentId);
+    async update(id, dto) {
+        await this.findOne(id);
         return this.prisma.device.update({ where: { id }, data: dto });
     }
     async updateStatus(deviceId, status) {
@@ -160,8 +153,8 @@ let DevicesService = class DevicesService {
             data: { status: client_1.DeviceStatus.ONLINE, lastSeen: new Date() },
         });
     }
-    async delete(id, parentId) {
-        const device = await this.findOne(id, parentId);
+    async delete(id) {
+        const device = await this.findOne(id);
         this.eventEmitter.emit('device.deleted', { deviceId: device.deviceId });
         await this.prisma.device.delete({ where: { id } });
         return { message: 'Device removed' };

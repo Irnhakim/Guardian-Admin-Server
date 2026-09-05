@@ -1,14 +1,11 @@
 import {
-  Controller, Post, Get, Body, Param, Query, UseGuards, ParseIntPipe,
+  Controller, Post, Get, Body, Param, Query, ParseIntPipe,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
+import { ApiTags, ApiOperation } from '@nestjs/swagger';
 import { BatteryService } from './battery.service';
 import { BatteryLogDto } from './dto/battery.dto';
-import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 
 @ApiTags('Battery')
-@ApiBearerAuth('JWT')
-@UseGuards(JwtAuthGuard)
 @Controller({ path: 'devices/:deviceId/battery', version: '1' })
 export class BatteryController {
   constructor(private batteryService: BatteryService) {}

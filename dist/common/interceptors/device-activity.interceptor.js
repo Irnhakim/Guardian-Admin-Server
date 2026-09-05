@@ -37,7 +37,6 @@ let DeviceActivityInterceptor = class DeviceActivityInterceptor {
                     });
                     this.eventEmitter.emit('device.status', {
                         deviceId: device.id,
-                        parentId: device.parentId,
                         status: 'ONLINE',
                     });
                 }

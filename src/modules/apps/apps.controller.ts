@@ -1,14 +1,11 @@
 import {
-  Controller, Post, Get, Body, Param, Query, UseGuards,
+  Controller, Post, Get, Body, Param, Query,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiQuery } from '@nestjs/swagger';
 import { AppsService } from './apps.service';
 import { SyncAppsDto, SyncUsageDto } from './dto/apps.dto';
-import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 
 @ApiTags('Apps')
-@ApiBearerAuth('JWT')
-@UseGuards(JwtAuthGuard)
 @Controller({ path: 'devices/:deviceId', version: '1' })
 export class AppsController {
   constructor(private appsService: AppsService) {}

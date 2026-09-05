@@ -1,14 +1,11 @@
 import {
-  Controller, Post, Get, Delete, Body, Param, Query, UseGuards, ParseIntPipe,
+  Controller, Post, Get, Delete, Body, Param, Query, ParseIntPipe,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiQuery } from '@nestjs/swagger';
 import { NotificationsService } from './notifications.service';
 import { CreateNotificationDto } from './dto/notification.dto';
-import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 
 @ApiTags('Notifications')
-@ApiBearerAuth('JWT')
-@UseGuards(JwtAuthGuard)
 @Controller({ path: 'devices/:deviceId/notifications', version: '1' })
 export class NotificationsController {
   constructor(private notificationsService: NotificationsService) {}

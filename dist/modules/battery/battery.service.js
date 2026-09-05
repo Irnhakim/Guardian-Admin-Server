@@ -52,13 +52,11 @@ let BatteryService = class BatteryService {
         }
         this.eventEmitter.emit('battery.updated', {
             deviceId: device.id,
-            parentId: device.parentId,
             data: log,
         });
         if (dto.level <= 20 && !dto.isCharging) {
             this.eventEmitter.emit('alert.low_battery', {
                 deviceId: device.id,
-                parentId: device.parentId,
                 level: dto.level,
             });
         }

@@ -16,57 +16,32 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.GuardianGateway = void 0;
 const websockets_1 = require("@nestjs/websockets");
 const socket_io_1 = require("socket.io");
-const jwt_1 = require("@nestjs/jwt");
 const event_emitter_1 = require("@nestjs/event-emitter");
 const common_1 = require("@nestjs/common");
 const prisma_service_1 = require("../../prisma/prisma.service");
 let GuardianGateway = GuardianGateway_1 = class GuardianGateway {
-    jwtService;
     prisma;
     server;
     logger = new common_1.Logger(GuardianGateway_1.name);
-    parentSockets = new Map();
     deviceSockets = new Map();
-    constructor(jwtService, prisma) {
-        this.jwtService = jwtService;
+    constructor(prisma) {
         this.prisma = prisma;
     }
     async handleConnection(client) {
-        try {
-            const deviceIdQuery = client.handshake.query?.deviceId;
-            const roleQuery = client.handshake.query?.role;
-            if (roleQuery === 'DEVICE' && deviceIdQuery) {
-                client.data.role = 'DEVICE';
-                client.data.deviceId = deviceIdQuery;
-                this.deviceSockets.set(deviceIdQuery, client.id);
-                client.join(`device:${deviceIdQuery}`);
-                await this.updateDeviceStatus(deviceIdQuery, 'ONLINE');
-                this.logger.log(`Device connected: ${client.id} (Device ID: ${deviceIdQuery})`);
-                return;
-            }
-            const token = client.handshake.auth?.token ||
-                client.handshake.headers?.authorization?.split(' ')[1];
-            if (!token) {
-                client.disconnect();
-                return;
-            }
-            const payload = this.jwtService.verify(token, {
-                secret: process.env.JWT_SECRET,
-            });
-            client.data.userId = payload.sub;
-            client.data.role = payload.role;
-            if (payload.role === 'PARENT' || payload.role === 'ADMIN') {
-                if (!this.parentSockets.has(payload.sub)) {
-                    this.parentSockets.set(payload.sub, new Set());
-                }
-                this.parentSockets.get(payload.sub).add(client.id);
-                client.join(`parent:${payload.sub}`);
-            }
-            this.logger.log(`Client connected: ${client.id} (${payload.role})`);
+        const deviceIdQuery = client.handshake.query?.deviceId;
+        const roleQuery = client.handshake.query?.role;
+        if (roleQuery === 'DEVICE' && deviceIdQuery) {
+            client.data.role = 'DEVICE';
+            client.data.deviceId = deviceIdQuery;
+            this.deviceSockets.set(deviceIdQuery, client.id);
+            client.join(`device:${deviceIdQuery}`);
+            await this.updateDeviceStatus(deviceIdQuery, 'ONLINE');
+            this.logger.log(`Device connected: ${client.id} (Device ID: ${deviceIdQuery})`);
+            return;
         }
-        catch {
-            client.disconnect();
-        }
+        client.data.role = 'PARENT';
+        client.join('dashboard');
+        this.logger.log(`Dashboard connected: ${client.id}`);
     }
     async handleDisconnect(client) {
         if (client.data?.role === 'DEVICE' && client.data?.deviceId) {
@@ -76,11 +51,7 @@ let GuardianGateway = GuardianGateway_1 = class GuardianGateway {
             this.logger.log(`Device disconnected: ${client.id} (Device ID: ${deviceId})`);
             return;
         }
-        const userId = client.data?.userId;
-        if (userId && this.parentSockets.has(userId)) {
-            this.parentSockets.get(userId).delete(client.id);
-        }
-        this.logger.log(`Client disconnected: ${client.id}`);
+        this.logger.log(`Dashboard disconnected: ${client.id}`);
     }
     async updateDeviceStatus(deviceId, status) {
         try {
@@ -88,23 +59,23 @@ let GuardianGateway = GuardianGateway_1 = class GuardianGateway {
                 where: { deviceId },
                 data: { status, lastSeen: new Date() },
             });
-            this.server.to(`parent:${device.parentId}`).emit('device:status', {
+            this.server.to('dashboard').emit('device:status', {
                 deviceId: device.id,
-                status: status,
+                status,
             });
         }
-        catch (e) {
+        catch {
         }
     }
     handleSubscribeDevice(data, client) {
         client.join(`device:${data.deviceId}`);
         return { event: 'subscribed', deviceId: data.deviceId };
     }
-    handlePingDevice(data, client) {
+    handlePingDevice(data) {
         this.server.to(`device:${data.deviceId}`).emit('force_sync');
         return { event: 'pinged', deviceId: data.deviceId };
     }
-    handleSendDeviceMessage(data, client) {
+    handleSendDeviceMessage(data) {
         this.server.to(`device:${data.deviceId}`).emit('device:message', {
             type: data.type,
             message: data.message,
@@ -112,16 +83,16 @@ let GuardianGateway = GuardianGateway_1 = class GuardianGateway {
         });
         return { event: 'message_sent', deviceId: data.deviceId };
     }
-    handleHideApp(data, client) {
+    handleHideApp(data) {
         this.server.to(`device:${data.deviceId}`).emit('app:hide');
         return { event: 'app_hidden', deviceId: data.deviceId };
     }
-    handleShowApp(data, client) {
+    handleShowApp(data) {
         this.server.to(`device:${data.deviceId}`).emit('app:show');
         return { event: 'app_shown', deviceId: data.deviceId };
     }
     handleBatteryUpdate(payload) {
-        this.server.to(`parent:${payload.parentId}`).emit('battery:update', {
+        this.server.to('dashboard').emit('battery:update', {
             deviceId: payload.deviceId,
             battery: payload.data,
         });
@@ -130,36 +101,36 @@ let GuardianGateway = GuardianGateway_1 = class GuardianGateway {
         });
     }
     handleLocationUpdate(payload) {
-        this.server.to(`parent:${payload.parentId}`).emit('location:update', {
+        this.server.to('dashboard').emit('location:update', {
             deviceId: payload.deviceId,
             location: payload.data,
         });
     }
     handleNotificationReceived(payload) {
-        this.server.to(`parent:${payload.parentId}`).emit('notification:received', {
+        this.server.to('dashboard').emit('notification:received', {
             deviceId: payload.deviceId,
             notification: payload.data,
         });
     }
     handleAppsSync(payload) {
-        this.server.to(`parent:${payload.parentId}`).emit('apps:synced', {
+        this.server.to('dashboard').emit('apps:synced', {
             deviceId: payload.deviceId,
             count: payload.count,
         });
     }
     handleUsageSync(payload) {
-        this.server.to(`parent:${payload.parentId}`).emit('usage:synced', {
+        this.server.to('dashboard').emit('usage:synced', {
             deviceId: payload.deviceId,
         });
     }
     handleDeviceStatus(payload) {
-        this.server.to(`parent:${payload.parentId}`).emit('device:status', {
+        this.server.to('dashboard').emit('device:status', {
             deviceId: payload.deviceId,
             status: payload.status,
         });
     }
     handleLowBattery(payload) {
-        this.server.to(`parent:${payload.parentId}`).emit('alert', {
+        this.server.to('dashboard').emit('alert', {
             type: 'LOW_BATTERY',
             deviceId: payload.deviceId,
             message: `Battery is at ${payload.level}%`,
@@ -169,7 +140,7 @@ let GuardianGateway = GuardianGateway_1 = class GuardianGateway {
         this.server.to(`device:${payload.deviceId}`).emit('device:deleted');
     }
     handleApprovalRequested(payload) {
-        this.server.to(`parent:${payload.parentId}`).emit('approval:requested', {
+        this.server.to('dashboard').emit('approval:requested', {
             deviceId: payload.deviceId,
             data: payload.data,
         });
@@ -180,9 +151,6 @@ let GuardianGateway = GuardianGateway_1 = class GuardianGateway {
             appName: payload.appName,
             status: payload.status,
         });
-    }
-    emitToParent(parentId, event, data) {
-        this.server.to(`parent:${parentId}`).emit(event, data);
     }
 };
 exports.GuardianGateway = GuardianGateway;
@@ -201,33 +169,29 @@ __decorate([
 __decorate([
     (0, websockets_1.SubscribeMessage)('ping_device'),
     __param(0, (0, websockets_1.MessageBody)()),
-    __param(1, (0, websockets_1.ConnectedSocket)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object, socket_io_1.Socket]),
+    __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", void 0)
 ], GuardianGateway.prototype, "handlePingDevice", null);
 __decorate([
     (0, websockets_1.SubscribeMessage)('send_device_message'),
     __param(0, (0, websockets_1.MessageBody)()),
-    __param(1, (0, websockets_1.ConnectedSocket)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object, socket_io_1.Socket]),
+    __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", void 0)
 ], GuardianGateway.prototype, "handleSendDeviceMessage", null);
 __decorate([
     (0, websockets_1.SubscribeMessage)('hide_app'),
     __param(0, (0, websockets_1.MessageBody)()),
-    __param(1, (0, websockets_1.ConnectedSocket)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object, socket_io_1.Socket]),
+    __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", void 0)
 ], GuardianGateway.prototype, "handleHideApp", null);
 __decorate([
     (0, websockets_1.SubscribeMessage)('show_app'),
     __param(0, (0, websockets_1.MessageBody)()),
-    __param(1, (0, websockets_1.ConnectedSocket)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object, socket_io_1.Socket]),
+    __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", void 0)
 ], GuardianGateway.prototype, "handleShowApp", null);
 __decorate([
@@ -298,7 +262,6 @@ exports.GuardianGateway = GuardianGateway = GuardianGateway_1 = __decorate([
         },
         namespace: '/guardian',
     }),
-    __metadata("design:paramtypes", [jwt_1.JwtService,
-        prisma_service_1.PrismaService])
+    __metadata("design:paramtypes", [prisma_service_1.PrismaService])
 ], GuardianGateway);
 //# sourceMappingURL=guardian.gateway.js.map

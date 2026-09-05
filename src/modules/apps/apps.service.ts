@@ -56,7 +56,6 @@ export class AppsService {
     // Emit for real-time dashboard refresh
     this.eventEmitter.emit('apps.synced', {
       deviceId: device.id,
-      parentId: device.parentId,
       count: dto.apps.length,
     });
 
@@ -108,7 +107,6 @@ export class AppsService {
 
     this.eventEmitter.emit('usage.synced', {
       deviceId: device.id,
-      parentId: device.parentId,
     });
 
     return { synced: dto.usages.length, message: 'Usage synced' };

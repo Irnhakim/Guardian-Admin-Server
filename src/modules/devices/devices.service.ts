@@ -1,8 +1,6 @@
 import {
   Injectable,
   NotFoundException,
-  ConflictException,
-  ForbiddenException,
 } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { RegisterDeviceDto, UpdateDeviceDto } from './dto/device.dto';
@@ -16,12 +14,11 @@ export class DevicesService {
     private eventEmitter: EventEmitter2,
   ) {}
 
-  async register(dto: RegisterDeviceDto, parentId: string) {
+  async register(dto: RegisterDeviceDto) {
     const existing = await this.prisma.device.findUnique({
       where: { deviceId: dto.deviceId },
     });
     if (existing) {
-      // Update and return if already registered (re-registration)
       const device = await this.prisma.device.update({
         where: { deviceId: dto.deviceId },
         data: {
@@ -39,7 +36,6 @@ export class DevicesService {
 
       this.eventEmitter.emit('device.status', {
         deviceId: device.id,
-        parentId: device.parentId,
         status: 'ONLINE',
       });
 
@@ -55,7 +51,6 @@ export class DevicesService {
         androidVersion: dto.androidVersion,
         securityPatch: dto.securityPatch,
         fcmToken: dto.fcmToken,
-        parentId,
         status: DeviceStatus.ONLINE,
         lastSeen: new Date(),
       },
@@ -63,16 +58,14 @@ export class DevicesService {
 
     this.eventEmitter.emit('device.status', {
       deviceId: device.id,
-      parentId: device.parentId,
       status: 'ONLINE',
     });
 
     return device;
   }
 
-  async findAll(parentId: string) {
+  async findAll() {
     const devices = await this.prisma.device.findMany({
-      where: { parentId },
       include: {
         _count: {
           select: {
@@ -91,7 +84,7 @@ export class DevicesService {
     const now = new Date();
     const threeMinutesAgo = new Date(now.getTime() - 3 * 60 * 1000);
 
-    const updatedDevices = await Promise.all(
+    return Promise.all(
       devices.map(async (device) => {
         if (
           device.status === DeviceStatus.ONLINE &&
@@ -105,7 +98,6 @@ export class DevicesService {
 
           this.eventEmitter.emit('device.status', {
             deviceId: device.id,
-            parentId: device.parentId,
             status: 'OFFLINE',
           });
 
@@ -114,13 +106,11 @@ export class DevicesService {
         return device;
       }),
     );
-
-    return updatedDevices;
   }
 
-  async findOne(id: string, parentId: string) {
+  async findOne(id: string) {
     const device = await this.prisma.device.findFirst({
-      where: { id, parentId },
+      where: { id },
       include: {
         _count: {
           select: {
@@ -147,7 +137,6 @@ export class DevicesService {
 
       this.eventEmitter.emit('device.status', {
         deviceId: device.id,
-        parentId: device.parentId,
         status: 'OFFLINE',
       });
 
@@ -163,8 +152,8 @@ export class DevicesService {
     return device;
   }
 
-  async update(id: string, parentId: string, dto: UpdateDeviceDto) {
-    await this.findOne(id, parentId);
+  async update(id: string, dto: UpdateDeviceDto) {
+    await this.findOne(id);
     return this.prisma.device.update({ where: { id }, data: dto });
   }
 
@@ -182,8 +171,8 @@ export class DevicesService {
     });
   }
 
-  async delete(id: string, parentId: string) {
-    const device = await this.findOne(id, parentId);
+  async delete(id: string) {
+    const device = await this.findOne(id);
     this.eventEmitter.emit('device.deleted', { deviceId: device.deviceId });
     await this.prisma.device.delete({ where: { id } });
     return { message: 'Device removed' };

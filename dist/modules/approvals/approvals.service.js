@@ -48,7 +48,6 @@ let ApprovalsService = class ApprovalsService {
         });
         this.eventEmitter.emit('approval.requested', {
             deviceId: device.id,
-            parentId: device.parentId,
             data: approval,
         });
         return approval;
@@ -62,16 +61,13 @@ let ApprovalsService = class ApprovalsService {
             orderBy: { requestedAt: 'desc' },
         });
     }
-    async resolve(id, parentId, dto) {
+    async resolve(id, dto) {
         const approval = await this.prisma.appApproval.findUnique({
             where: { id },
             include: { device: true },
         });
         if (!approval)
             throw new common_1.NotFoundException('Approval request not found');
-        if (approval.device.parentId !== parentId) {
-            throw new common_1.ForbiddenException('You do not have permission to manage this device');
-        }
         const updated = await this.prisma.appApproval.update({
             where: { id },
             data: {

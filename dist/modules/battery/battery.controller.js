@@ -17,7 +17,6 @@ const common_1 = require("@nestjs/common");
 const swagger_1 = require("@nestjs/swagger");
 const battery_service_1 = require("./battery.service");
 const battery_dto_1 = require("./dto/battery.dto");
-const jwt_auth_guard_1 = require("../../common/guards/jwt-auth.guard");
 let BatteryController = class BatteryController {
     batteryService;
     constructor(batteryService) {
@@ -62,8 +61,6 @@ __decorate([
 ], BatteryController.prototype, "getHistory", null);
 exports.BatteryController = BatteryController = __decorate([
     (0, swagger_1.ApiTags)('Battery'),
-    (0, swagger_1.ApiBearerAuth)('JWT'),
-    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
     (0, common_1.Controller)({ path: 'devices/:deviceId/battery', version: '1' }),
     __metadata("design:paramtypes", [battery_service_1.BatteryService])
 ], BatteryController);

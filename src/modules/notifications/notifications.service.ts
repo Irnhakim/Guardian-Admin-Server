@@ -38,7 +38,6 @@ export class NotificationsService {
     // Emit event for real-time WebSocket and parent updates
     this.eventEmitter.emit('notification.received', {
       deviceId: device.id,
-      parentId: device.parentId,
       data: notification,
     });
 

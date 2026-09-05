@@ -4,8 +4,8 @@ export declare class LocationsController {
     private locationsService;
     constructor(locationsService: LocationsService);
     log(deviceId: string, dto: LocationDto): Promise<{
-        id: string;
         deviceId: string;
+        id: string;
         timestamp: Date;
         latitude: number;
         longitude: number;
@@ -16,8 +16,8 @@ export declare class LocationsController {
         provider: string | null;
     }>;
     getLatest(deviceId: string): Promise<{
-        id: string;
         deviceId: string;
+        id: string;
         timestamp: Date;
         latitude: number;
         longitude: number;
@@ -28,8 +28,8 @@ export declare class LocationsController {
         provider: string | null;
     } | null>;
     getHistory(deviceId: string, limit?: number, from?: string, to?: string): Promise<{
-        id: string;
         deviceId: string;
+        id: string;
         timestamp: Date;
         latitude: number;
         longitude: number;

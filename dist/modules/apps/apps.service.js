@@ -57,7 +57,6 @@ let AppsService = class AppsService {
         ]);
         this.eventEmitter.emit('apps.synced', {
             deviceId: device.id,
-            parentId: device.parentId,
             count: dto.apps.length,
         });
         return { synced: dto.apps.length, message: 'Apps synced successfully' };
@@ -104,7 +103,6 @@ let AppsService = class AppsService {
         }
         this.eventEmitter.emit('usage.synced', {
             deviceId: device.id,
-            parentId: device.parentId,
         });
         return { synced: dto.usages.length, message: 'Usage synced' };
     }

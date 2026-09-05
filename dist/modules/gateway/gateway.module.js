@@ -8,7 +8,6 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.GatewayModule = void 0;
 const common_1 = require("@nestjs/common");
-const jwt_1 = require("@nestjs/jwt");
 const guardian_gateway_1 = require("./guardian.gateway");
 const prisma_module_1 = require("../../prisma/prisma.module");
 let GatewayModule = class GatewayModule {
@@ -16,12 +15,7 @@ let GatewayModule = class GatewayModule {
 exports.GatewayModule = GatewayModule;
 exports.GatewayModule = GatewayModule = __decorate([
     (0, common_1.Module)({
-        imports: [
-            prisma_module_1.PrismaModule,
-            jwt_1.JwtModule.register({
-                secret: process.env.JWT_SECRET || 'guardian_jwt_secret',
-            }),
-        ],
+        imports: [prisma_module_1.PrismaModule],
         providers: [guardian_gateway_1.GuardianGateway],
         exports: [guardian_gateway_1.GuardianGateway],
     })

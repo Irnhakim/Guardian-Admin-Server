@@ -17,7 +17,6 @@ const common_1 = require("@nestjs/common");
 const swagger_1 = require("@nestjs/swagger");
 const approvals_service_1 = require("./approvals.service");
 const approval_dto_1 = require("./dto/approval.dto");
-const jwt_auth_guard_1 = require("../../common/guards/jwt-auth.guard");
 let ApprovalsController = class ApprovalsController {
     approvalsService;
     constructor(approvalsService) {
@@ -29,8 +28,8 @@ let ApprovalsController = class ApprovalsController {
     getHistory(deviceId) {
         return this.approvalsService.getHistory(deviceId);
     }
-    resolve(id, req, dto) {
-        return this.approvalsService.resolve(id, req.user.userId, dto);
+    resolve(id, dto) {
+        return this.approvalsService.resolve(id, dto);
     }
 };
 exports.ApprovalsController = ApprovalsController;
@@ -55,16 +54,13 @@ __decorate([
     (0, common_1.Patch)(':id'),
     (0, swagger_1.ApiOperation)({ summary: 'Approve or reject a package installation request' }),
     __param(0, (0, common_1.Param)('id')),
-    __param(1, (0, common_1.Request)()),
-    __param(2, (0, common_1.Body)()),
+    __param(1, (0, common_1.Body)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, Object, approval_dto_1.ResolveApprovalDto]),
+    __metadata("design:paramtypes", [String, approval_dto_1.ResolveApprovalDto]),
     __metadata("design:returntype", void 0)
 ], ApprovalsController.prototype, "resolve", null);
 exports.ApprovalsController = ApprovalsController = __decorate([
     (0, swagger_1.ApiTags)('Approvals'),
-    (0, swagger_1.ApiBearerAuth)('JWT'),
-    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
     (0, common_1.Controller)({ path: 'devices/:deviceId/approvals', version: '1' }),
     __metadata("design:paramtypes", [approvals_service_1.ApprovalsService])
 ], ApprovalsController);

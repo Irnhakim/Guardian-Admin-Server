@@ -1,14 +1,11 @@
 import {
-  Controller, Post, Get, Patch, Body, Param, UseGuards, Request,
+  Controller, Post, Get, Patch, Body, Param,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
+import { ApiTags, ApiOperation } from '@nestjs/swagger';
 import { ApprovalsService } from './approvals.service';
 import { CreateApprovalDto, ResolveApprovalDto } from './dto/approval.dto';
-import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 
 @ApiTags('Approvals')
-@ApiBearerAuth('JWT')
-@UseGuards(JwtAuthGuard)
 @Controller({ path: 'devices/:deviceId/approvals', version: '1' })
 export class ApprovalsController {
   constructor(private approvalsService: ApprovalsService) {}
@@ -29,9 +26,8 @@ export class ApprovalsController {
   @ApiOperation({ summary: 'Approve or reject a package installation request' })
   resolve(
     @Param('id') id: string,
-    @Request() req: any,
     @Body() dto: ResolveApprovalDto,
   ) {
-    return this.approvalsService.resolve(id, req.user.userId, dto);
+    return this.approvalsService.resolve(id, dto);
   }
 }

@@ -44,7 +44,6 @@ let NotificationsService = class NotificationsService {
         });
         this.eventEmitter.emit('notification.received', {
             deviceId: device.id,
-            parentId: device.parentId,
             data: notification,
         });
         return notification;

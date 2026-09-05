@@ -11,46 +11,6 @@ datasource db {
 }
 
 // ============================================================
-// AUTHENTICATION & USERS
-// ============================================================
-
-enum Role {
-  PARENT
-  CHILD
-  ADMIN
-}
-
-model User {
-  id           String   @id @default(uuid())
-  email        String   @unique
-  password     String
-  name         String
-  role         Role     @default(PARENT)
-  isActive     Boolean  @default(true)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-
-  // Relations
-  devices      Device[]     @relation("ParentDevices")
-  refreshTokens RefreshToken[]
-  auditLogs    AuditLog[]
-
-  @@map("users")
-}
-
-model RefreshToken {
-  id        String   @id @default(uuid())
-  token     String   @unique
-  userId    String
-  expiresAt DateTime
-  createdAt DateTime @default(now())
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@map("refresh_tokens")
-}
-
-// ============================================================
 // DEVICES
 // ============================================================
 
@@ -67,7 +27,6 @@ model Device {
   model          String
   androidVersion String
   securityPatch  String?
-  parentId       String
   status         DeviceStatus @default(OFFLINE)
   lastSeen       DateTime?
   registeredAt   DateTime     @default(now())
@@ -75,7 +34,6 @@ model Device {
   fcmToken       String?      // Firebase Cloud Messaging token
 
   // Relations
-  parent            User              @relation("ParentDevices", fields: [parentId], references: [id])
   batteryLogs       BatteryLog[]
   locations         Location[]
   installedApps     InstalledApp[]
@@ -290,26 +248,6 @@ model Alert {
   @@index([deviceId, isRead])
   @@index([deviceId, createdAt])
   @@map("alerts")
-}
-
-// ============================================================
-// AUDIT LOGS
-// ============================================================
-
-model AuditLog {
-  id        String   @id @default(uuid())
-  userId    String
-  action    String
-  resource  String
-  details   Json?
-  ipAddress String?
-  userAgent String?
-  createdAt DateTime @default(now())
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId, createdAt])
-  @@map("audit_logs")
 }
 
 // ============================================================

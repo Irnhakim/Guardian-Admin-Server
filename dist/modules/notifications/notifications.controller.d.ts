@@ -5,8 +5,8 @@ export declare class NotificationsController {
     constructor(notificationsService: NotificationsService);
     log(deviceId: string, dto: CreateNotificationDto): Promise<{
         title: string | null;
-        id: string;
         deviceId: string;
+        id: string;
         packageName: string;
         appName: string;
         text: string | null;
@@ -15,8 +15,8 @@ export declare class NotificationsController {
     }>;
     getHistory(deviceId: string, limit?: number): Promise<{
         title: string | null;
-        id: string;
         deviceId: string;
+        id: string;
         packageName: string;
         appName: string;
         text: string | null;

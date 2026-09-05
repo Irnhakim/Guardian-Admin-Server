@@ -37,7 +37,6 @@ export class DeviceActivityInterceptor implements NestInterceptor {
             // Emit the status update event for WebSockets
             this.eventEmitter.emit('device.status', {
               deviceId: device.id,
-              parentId: device.parentId,
               status: 'ONLINE',
             });
           } catch (error) {

@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateApprovalDto, ResolveApprovalDto } from './dto/approval.dto';
 import { EventEmitter2 } from '@nestjs/event-emitter';
@@ -39,7 +39,6 @@ export class ApprovalsService {
 
     this.eventEmitter.emit('approval.requested', {
       deviceId: device.id,
-      parentId: device.parentId,
       data: approval,
     });
 
@@ -56,16 +55,13 @@ export class ApprovalsService {
     });
   }
 
-  async resolve(id: string, parentId: string, dto: ResolveApprovalDto) {
+  async resolve(id: string, dto: ResolveApprovalDto) {
     const approval = await this.prisma.appApproval.findUnique({
       where: { id },
       include: { device: true },
     });
 
     if (!approval) throw new NotFoundException('Approval request not found');
-    if (approval.device.parentId !== parentId) {
-      throw new ForbiddenException('You do not have permission to manage this device');
-    }
 
     const updated = await this.prisma.appApproval.update({
       where: { id },

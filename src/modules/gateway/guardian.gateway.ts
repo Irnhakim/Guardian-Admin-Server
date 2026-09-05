@@ -8,7 +8,6 @@ import {
   ConnectedSocket,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
-import { JwtService } from '@nestjs/jwt';
 import { OnEvent } from '@nestjs/event-emitter';
 import { Logger } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
@@ -27,84 +26,40 @@ export class GuardianGateway
   server: Server;
 
   private readonly logger = new Logger(GuardianGateway.name);
-  // Map parentId → Set of socket IDs
-  private parentSockets = new Map<string, Set<string>>();
   // Map deviceId → socket ID
   private deviceSockets = new Map<string, string>();
 
-  constructor(
-    private jwtService: JwtService,
-    private prisma: PrismaService
-  ) {}
+  constructor(private prisma: PrismaService) {}
 
   async handleConnection(client: Socket) {
-    try {
-      const deviceIdQuery = client.handshake.query?.deviceId as string;
-      const roleQuery = client.handshake.query?.role as string;
+    const deviceIdQuery = client.handshake.query?.deviceId as string;
+    const roleQuery = client.handshake.query?.role as string;
 
-      // Handle Device connection
-      if (roleQuery === 'DEVICE' && deviceIdQuery) {
-        client.data.role = 'DEVICE';
-        client.data.deviceId = deviceIdQuery;
-        
-        this.deviceSockets.set(deviceIdQuery, client.id);
-        client.join(`device:${deviceIdQuery}`);
-        
-        // Update device status to ONLINE in DB immediately
-        await this.updateDeviceStatus(deviceIdQuery, 'ONLINE');
-        
-        this.logger.log(`Device connected: ${client.id} (Device ID: ${deviceIdQuery})`);
-        return;
-      }
-
-      // Handle Parent/Dashboard connection
-      const token =
-        client.handshake.auth?.token ||
-        client.handshake.headers?.authorization?.split(' ')[1];
-
-      if (!token) {
-        client.disconnect();
-        return;
-      }
-
-      const payload = this.jwtService.verify(token, {
-        secret: process.env.JWT_SECRET,
-      });
-
-      client.data.userId = payload.sub;
-      client.data.role = payload.role;
-
-      // Add to parent room
-      if (payload.role === 'PARENT' || payload.role === 'ADMIN') {
-        if (!this.parentSockets.has(payload.sub)) {
-          this.parentSockets.set(payload.sub, new Set());
-        }
-        this.parentSockets.get(payload.sub)!.add(client.id);
-        client.join(`parent:${payload.sub}`);
-      }
-
-      this.logger.log(`Client connected: ${client.id} (${payload.role})`);
-    } catch {
-      client.disconnect();
+    if (roleQuery === 'DEVICE' && deviceIdQuery) {
+      client.data.role = 'DEVICE';
+      client.data.deviceId = deviceIdQuery;
+      this.deviceSockets.set(deviceIdQuery, client.id);
+      client.join(`device:${deviceIdQuery}`);
+      await this.updateDeviceStatus(deviceIdQuery, 'ONLINE');
+      this.logger.log(`Device connected: ${client.id} (Device ID: ${deviceIdQuery})`);
+      return;
     }
+
+    // Dashboard/parent — no auth required
+    client.data.role = 'PARENT';
+    client.join('dashboard');
+    this.logger.log(`Dashboard connected: ${client.id}`);
   }
 
   async handleDisconnect(client: Socket) {
     if (client.data?.role === 'DEVICE' && client.data?.deviceId) {
       const deviceId = client.data.deviceId;
       this.deviceSockets.delete(deviceId);
-      
-      // Update device status to OFFLINE in DB immediately since the socket dropped
       await this.updateDeviceStatus(deviceId, 'OFFLINE');
       this.logger.log(`Device disconnected: ${client.id} (Device ID: ${deviceId})`);
       return;
     }
-
-    const userId = client.data?.userId;
-    if (userId && this.parentSockets.has(userId)) {
-      this.parentSockets.get(userId)!.delete(client.id);
-    }
-    this.logger.log(`Client disconnected: ${client.id}`);
+    this.logger.log(`Dashboard disconnected: ${client.id}`);
   }
 
   private async updateDeviceStatus(deviceId: string, status: 'ONLINE' | 'OFFLINE') {
@@ -113,12 +68,11 @@ export class GuardianGateway
         where: { deviceId },
         data: { status, lastSeen: new Date() },
       });
-      // Notify parent via socket
-      this.server.to(`parent:${device.parentId}`).emit('device:status', {
+      this.server.to('dashboard').emit('device:status', {
         deviceId: device.id,
-        status: status,
+        status,
       });
-    } catch (e) {
+    } catch {
       // Ignore if device not found
     }
   }
@@ -135,9 +89,7 @@ export class GuardianGateway
   @SubscribeMessage('ping_device')
   handlePingDevice(
     @MessageBody() data: { deviceId: string },
-    @ConnectedSocket() client: Socket,
   ) {
-    // Parent emits this, server forwards "force_sync" to the device
     this.server.to(`device:${data.deviceId}`).emit('force_sync');
     return { event: 'pinged', deviceId: data.deviceId };
   }
@@ -145,7 +97,6 @@ export class GuardianGateway
   @SubscribeMessage('send_device_message')
   handleSendDeviceMessage(
     @MessageBody() data: { deviceId: string; type: 'MESSAGE' | 'BLOCK'; message: string; password?: string },
-    @ConnectedSocket() client: Socket,
   ) {
     this.server.to(`device:${data.deviceId}`).emit('device:message', {
       type: data.type,
@@ -156,30 +107,22 @@ export class GuardianGateway
   }
 
   @SubscribeMessage('hide_app')
-  handleHideApp(
-    @MessageBody() data: { deviceId: string },
-    @ConnectedSocket() client: Socket,
-  ) {
-    // Forward hide command to the device — app icon disappears from launcher
+  handleHideApp(@MessageBody() data: { deviceId: string }) {
     this.server.to(`device:${data.deviceId}`).emit('app:hide');
     return { event: 'app_hidden', deviceId: data.deviceId };
   }
 
   @SubscribeMessage('show_app')
-  handleShowApp(
-    @MessageBody() data: { deviceId: string },
-    @ConnectedSocket() client: Socket,
-  ) {
-    // Forward show command to the device — app icon reappears in launcher
+  handleShowApp(@MessageBody() data: { deviceId: string }) {
     this.server.to(`device:${data.deviceId}`).emit('app:show');
     return { event: 'app_shown', deviceId: data.deviceId };
   }
 
-  // ── Event Listeners (emitted from services) ──────────────────────────
+  // ── Event Listeners ──────────────────────────────────────────
 
   @OnEvent('battery.updated')
-  handleBatteryUpdate(payload: { deviceId: string; parentId: string; data: any }) {
-    this.server.to(`parent:${payload.parentId}`).emit('battery:update', {
+  handleBatteryUpdate(payload: { deviceId: string; data: any }) {
+    this.server.to('dashboard').emit('battery:update', {
       deviceId: payload.deviceId,
       battery: payload.data,
     });
@@ -189,47 +132,47 @@ export class GuardianGateway
   }
 
   @OnEvent('location.updated')
-  handleLocationUpdate(payload: { deviceId: string; parentId: string; data: any }) {
-    this.server.to(`parent:${payload.parentId}`).emit('location:update', {
+  handleLocationUpdate(payload: { deviceId: string; data: any }) {
+    this.server.to('dashboard').emit('location:update', {
       deviceId: payload.deviceId,
       location: payload.data,
     });
   }
 
   @OnEvent('notification.received')
-  handleNotificationReceived(payload: { deviceId: string; parentId: string; data: any }) {
-    this.server.to(`parent:${payload.parentId}`).emit('notification:received', {
+  handleNotificationReceived(payload: { deviceId: string; data: any }) {
+    this.server.to('dashboard').emit('notification:received', {
       deviceId: payload.deviceId,
       notification: payload.data,
     });
   }
 
   @OnEvent('apps.synced')
-  handleAppsSync(payload: { deviceId: string; parentId: string; count: number }) {
-    this.server.to(`parent:${payload.parentId}`).emit('apps:synced', {
+  handleAppsSync(payload: { deviceId: string; count: number }) {
+    this.server.to('dashboard').emit('apps:synced', {
       deviceId: payload.deviceId,
       count: payload.count,
     });
   }
 
   @OnEvent('usage.synced')
-  handleUsageSync(payload: { deviceId: string; parentId: string }) {
-    this.server.to(`parent:${payload.parentId}`).emit('usage:synced', {
+  handleUsageSync(payload: { deviceId: string }) {
+    this.server.to('dashboard').emit('usage:synced', {
       deviceId: payload.deviceId,
     });
   }
 
   @OnEvent('device.status')
-  handleDeviceStatus(payload: { deviceId: string; parentId: string; status: string }) {
-    this.server.to(`parent:${payload.parentId}`).emit('device:status', {
+  handleDeviceStatus(payload: { deviceId: string; status: string }) {
+    this.server.to('dashboard').emit('device:status', {
       deviceId: payload.deviceId,
       status: payload.status,
     });
   }
 
   @OnEvent('alert.low_battery')
-  handleLowBattery(payload: { deviceId: string; parentId: string; level: number }) {
-    this.server.to(`parent:${payload.parentId}`).emit('alert', {
+  handleLowBattery(payload: { deviceId: string; level: number }) {
+    this.server.to('dashboard').emit('alert', {
       type: 'LOW_BATTERY',
       deviceId: payload.deviceId,
       message: `Battery is at ${payload.level}%`,
@@ -242,8 +185,8 @@ export class GuardianGateway
   }
 
   @OnEvent('approval.requested')
-  handleApprovalRequested(payload: { deviceId: string; parentId: string; data: any }) {
-    this.server.to(`parent:${payload.parentId}`).emit('approval:requested', {
+  handleApprovalRequested(payload: { deviceId: string; data: any }) {
+    this.server.to('dashboard').emit('approval:requested', {
       deviceId: payload.deviceId,
       data: payload.data,
     });
@@ -262,10 +205,5 @@ export class GuardianGateway
       appName: payload.appName,
       status: payload.status,
     });
-  }
-
-  // Utility to push to a parent's sockets directly
-  emitToParent(parentId: string, event: string, data: any) {
-    this.server.to(`parent:${parentId}`).emit(event, data);
   }
 }

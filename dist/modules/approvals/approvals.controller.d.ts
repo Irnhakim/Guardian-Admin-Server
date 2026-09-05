@@ -4,8 +4,8 @@ export declare class ApprovalsController {
     private approvalsService;
     constructor(approvalsService: ApprovalsService);
     create(deviceId: string, dto: CreateApprovalDto): Promise<{
-        id: string;
         deviceId: string;
+        id: string;
         status: import("@prisma/client").$Enums.ApprovalStatus;
         packageName: string;
         appName: string;
@@ -14,8 +14,8 @@ export declare class ApprovalsController {
         resolvedAt: Date | null;
     }>;
     getHistory(deviceId: string): Promise<{
-        id: string;
         deviceId: string;
+        id: string;
         status: import("@prisma/client").$Enums.ApprovalStatus;
         packageName: string;
         appName: string;
@@ -23,9 +23,9 @@ export declare class ApprovalsController {
         requestedAt: Date;
         resolvedAt: Date | null;
     }[]>;
-    resolve(id: string, req: any, dto: ResolveApprovalDto): Promise<{
-        id: string;
+    resolve(id: string, dto: ResolveApprovalDto): Promise<{
         deviceId: string;
+        id: string;
         status: import("@prisma/client").$Enums.ApprovalStatus;
         packageName: string;
         appName: string;

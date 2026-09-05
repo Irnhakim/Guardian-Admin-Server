@@ -6,8 +6,8 @@ export declare class ApprovalsService {
     private eventEmitter;
     constructor(prisma: PrismaService, eventEmitter: EventEmitter2);
     create(deviceId: string, dto: CreateApprovalDto): Promise<{
-        id: string;
         deviceId: string;
+        id: string;
         status: import("@prisma/client").$Enums.ApprovalStatus;
         packageName: string;
         appName: string;
@@ -16,8 +16,8 @@ export declare class ApprovalsService {
         resolvedAt: Date | null;
     }>;
     getHistory(deviceId: string): Promise<{
-        id: string;
         deviceId: string;
+        id: string;
         status: import("@prisma/client").$Enums.ApprovalStatus;
         packageName: string;
         appName: string;
@@ -25,9 +25,9 @@ export declare class ApprovalsService {
         requestedAt: Date;
         resolvedAt: Date | null;
     }[]>;
-    resolve(id: string, parentId: string, dto: ResolveApprovalDto): Promise<{
-        id: string;
+    resolve(id: string, dto: ResolveApprovalDto): Promise<{
         deviceId: string;
+        id: string;
         status: import("@prisma/client").$Enums.ApprovalStatus;
         packageName: string;
         appName: string;

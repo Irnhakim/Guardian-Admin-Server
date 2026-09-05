@@ -50,14 +50,11 @@ export class LocationsService {
     // Emit for real-time WebSocket updates
     this.eventEmitter.emit('location.updated', {
       deviceId: device.id,
-      parentId: device.parentId,
       data: location,
     });
 
-    // Check geofences
     this.eventEmitter.emit('geofence.check', {
       deviceId: device.id,
-      parentId: device.parentId,
       latitude: dto.latitude,
       longitude: dto.longitude,
     });

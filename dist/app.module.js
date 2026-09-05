@@ -12,7 +12,6 @@ const config_1 = require("@nestjs/config");
 const event_emitter_1 = require("@nestjs/event-emitter");
 const throttler_1 = require("@nestjs/throttler");
 const prisma_module_1 = require("./prisma/prisma.module");
-const auth_module_1 = require("./modules/auth/auth.module");
 const devices_module_1 = require("./modules/devices/devices.module");
 const battery_module_1 = require("./modules/battery/battery.module");
 const locations_module_1 = require("./modules/locations/locations.module");
@@ -38,7 +37,6 @@ exports.AppModule = AppModule = __decorate([
                 },
             ]),
             prisma_module_1.PrismaModule,
-            auth_module_1.AuthModule,
             devices_module_1.DevicesModule,
             battery_module_1.BatteryModule,
             locations_module_1.LocationsModule,
