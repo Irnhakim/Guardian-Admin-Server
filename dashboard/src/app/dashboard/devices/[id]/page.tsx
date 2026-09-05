@@ -351,8 +351,8 @@ export default function DeviceDetailPage() {
               </div>
             </div>
           </div>
-          <button 
-            onClick={handleForceSync}
+          <button
+            onClick={() => handleForceSync("all")}
             disabled={!isOnline || isSyncing}
             className={`btn-primary flex items-center gap-2 ${(!isOnline || isSyncing) ? 'opacity-50 cursor-not-allowed' : ''}`}
           >
