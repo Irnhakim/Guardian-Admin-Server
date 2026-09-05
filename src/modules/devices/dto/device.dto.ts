@@ -40,6 +40,10 @@ export class RegisterDeviceDto {
   @IsOptional()
   @IsString()
   fcmToken?: string;
+
+  @ApiPropertyOptional({ description: 'Client permissions checklist' })
+  @IsOptional()
+  permissions?: Record<string, boolean>;
 }
 
 export class UpdateDeviceDto {
@@ -62,4 +66,8 @@ export class UpdateDeviceDto {
   @IsOptional()
   @IsString()
   securityPatch?: string;
+
+  @ApiPropertyOptional({ description: 'Client permissions checklist' })
+  @IsOptional()
+  permissions?: Record<string, boolean>;
 }

@@ -20,6 +20,7 @@ class RegisterDeviceDto {
     androidVersion;
     securityPatch;
     fcmToken;
+    permissions;
 }
 exports.RegisterDeviceDto = RegisterDeviceDto;
 __decorate([
@@ -64,11 +65,17 @@ __decorate([
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
 ], RegisterDeviceDto.prototype, "fcmToken", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({ description: 'Client permissions checklist' }),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", Object)
+], RegisterDeviceDto.prototype, "permissions", void 0);
 class UpdateDeviceDto {
     deviceName;
     fcmToken;
     androidVersion;
     securityPatch;
+    permissions;
 }
 exports.UpdateDeviceDto = UpdateDeviceDto;
 __decorate([
@@ -95,4 +102,9 @@ __decorate([
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
 ], UpdateDeviceDto.prototype, "securityPatch", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({ description: 'Client permissions checklist' }),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", Object)
+], UpdateDeviceDto.prototype, "permissions", void 0);
 //# sourceMappingURL=device.dto.js.map

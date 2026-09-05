@@ -6,10 +6,12 @@ export declare class RegisterDeviceDto {
     androidVersion: string;
     securityPatch?: string;
     fcmToken?: string;
+    permissions?: Record<string, boolean>;
 }
 export declare class UpdateDeviceDto {
     deviceName?: string;
     fcmToken?: string;
     androidVersion?: string;
     securityPatch?: string;
+    permissions?: Record<string, boolean>;
 }

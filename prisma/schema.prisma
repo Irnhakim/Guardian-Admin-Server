@@ -32,6 +32,7 @@ model Device {
   registeredAt   DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
   fcmToken       String?      // Firebase Cloud Messaging token
+  permissions    Json?        // Client permission statuses: location, usageStats, notification, notificationAccess, overlay, deviceAdmin, accessibility
 
   // Relations
   batteryLogs       BatteryLog[]

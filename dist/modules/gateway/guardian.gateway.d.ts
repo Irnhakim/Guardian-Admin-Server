@@ -81,6 +81,10 @@ export declare class GuardianGateway implements OnGatewayConnection, OnGatewayDi
     handleDeviceDeleted(payload: {
         deviceId: string;
     }): void;
+    handleDevicePermissions(payload: {
+        deviceId: string;
+        permissions: any;
+    }): void;
     handleApprovalRequested(payload: {
         deviceId: string;
         data: any;

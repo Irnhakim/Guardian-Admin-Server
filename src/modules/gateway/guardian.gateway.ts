@@ -197,6 +197,14 @@ export class GuardianGateway
     this.server.to(`device:${payload.deviceId}`).emit('device:deleted');
   }
 
+  @OnEvent('device.permissions')
+  handleDevicePermissions(payload: { deviceId: string; permissions: any }) {
+    this.server.to('dashboard').emit('device:permissions', {
+      deviceId: payload.deviceId,
+      permissions: payload.permissions,
+    });
+  }
+
   @OnEvent('approval.requested')
   handleApprovalRequested(payload: { deviceId: string; data: any }) {
     this.server.to('dashboard').emit('approval:requested', {

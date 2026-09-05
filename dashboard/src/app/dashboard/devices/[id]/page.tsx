@@ -10,7 +10,7 @@ import {
   Battery, Wifi, WifiOff, Smartphone, MapPin,
   Clock, BarChart2, Shield, ChevronLeft,
   Thermometer, Navigation, RefreshCw, Bell, Trash2,
-  Send, MessageSquare, Lock, Eye, EyeOff,
+  Send, MessageSquare, Lock, Eye, EyeOff, ShieldCheck,
 } from "lucide-react";
 import Link from "next/link";
 import { formatDistanceToNow } from "date-fns";
@@ -260,6 +260,11 @@ export default function DeviceDetailPage() {
         setIsProtectionActive(payload.enabled);
       }
     });
+    socket.on("device:permissions", (payload: { deviceId: string; permissions: any }) => {
+      if (payload.deviceId === targetId || payload.deviceId === hardwareId) {
+        refetchDevice();
+      }
+    });
     return () => {
       socket.off("battery:update");
       socket.off("location:update");
@@ -268,6 +273,7 @@ export default function DeviceDetailPage() {
       socket.off("notification:received");
       socket.off("approval:requested");
       socket.off("protection:changed");
+      socket.off("device:permissions");
     };
   }, [socket, device, refetchApps, refetchDevice, refetchUsage, refetchNotifications, refetchApprovals]);
 
@@ -420,6 +426,52 @@ export default function DeviceDetailPage() {
                   <p className="font-medium mt-0.5" style={{ color: "var(--text-primary)" }}>{value}</p>
                 </div>
               ))}
+            </div>
+          </div>
+
+          {/* Status Izin & Hak Akses HP Anak */}
+          <div className="metric-card col-span-3">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <ShieldCheck size={18} style={{ color: "var(--accent)" }} />
+                <span className="font-semibold text-sm" style={{ color: "var(--text-primary)" }}>Status Izin & Hak Akses Sistem (Permissions)</span>
+              </div>
+              <span className="text-xs" style={{ color: "var(--text-muted)" }}>
+                Diperbarui otomatis saat sinkronisasi
+              </span>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+              {[
+                { key: "location", label: "Akses Lokasi (GPS)" },
+                { key: "usageStats", label: "Statistik Penggunaan (Usage)" },
+                { key: "notification", label: "Izin Notifikasi (POST)" },
+                { key: "notificationAccess", label: "Baca Notifikasi (Listener)" },
+                { key: "overlay", label: "Tampil di Atas App (Overlay)" },
+                { key: "deviceAdmin", label: "Device Admin Policy" },
+                { key: "accessibility", label: "Accessibility Watchdog" },
+              ].map((item) => {
+                const isGranted = Boolean(device.permissions?.[item.key]);
+                return (
+                  <div
+                    key={item.key}
+                    className="p-3 rounded-xl border flex items-center justify-between"
+                    style={{ background: "var(--bg-secondary)", borderColor: "var(--border)" }}
+                  >
+                    <div>
+                      <p className="text-xs font-semibold" style={{ color: "var(--text-primary)" }}>{item.label}</p>
+                      <p className="text-[10px] mt-0.5" style={{ color: isGranted ? "#10b981" : "#f59e0b" }}>
+                        {isGranted ? "Diizinkan (Aktif)" : "Belum Diizinkan"}
+                      </p>
+                    </div>
+                    <span
+                      className={`w-2.5 h-2.5 rounded-full shrink-0 ${
+                        isGranted ? "bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.6)]" : "bg-amber-400"
+                      }`}
+                    />
+                  </div>
+                );
+              })}
             </div>
           </div>
 

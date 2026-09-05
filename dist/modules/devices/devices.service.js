@@ -35,6 +35,7 @@ let DevicesService = class DevicesService {
                     androidVersion: dto.androidVersion,
                     securityPatch: dto.securityPatch,
                     fcmToken: dto.fcmToken,
+                    permissions: dto.permissions !== undefined ? dto.permissions : undefined,
                     status: client_1.DeviceStatus.ONLINE,
                     lastSeen: new Date(),
                     updatedAt: new Date(),
@@ -55,6 +56,7 @@ let DevicesService = class DevicesService {
                 androidVersion: dto.androidVersion,
                 securityPatch: dto.securityPatch,
                 fcmToken: dto.fcmToken,
+                permissions: dto.permissions !== undefined ? dto.permissions : undefined,
                 status: client_1.DeviceStatus.ONLINE,
                 lastSeen: new Date(),
             },
@@ -145,7 +147,20 @@ let DevicesService = class DevicesService {
     }
     async update(id, dto) {
         const device = await this.findOne(id);
-        return this.prisma.device.update({ where: { id: device.id }, data: dto });
+        const updated = await this.prisma.device.update({
+            where: { id: device.id },
+            data: {
+                ...dto,
+                permissions: dto.permissions !== undefined ? dto.permissions : undefined,
+            },
+        });
+        if (dto.permissions) {
+            this.eventEmitter.emit('device.permissions', {
+                deviceId: device.id,
+                permissions: dto.permissions,
+            });
+        }
+        return updated;
     }
     async updateStatus(deviceId, status) {
         return this.prisma.device.update({

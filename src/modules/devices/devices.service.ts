@@ -28,6 +28,7 @@ export class DevicesService {
           androidVersion: dto.androidVersion,
           securityPatch: dto.securityPatch,
           fcmToken: dto.fcmToken,
+          permissions: dto.permissions !== undefined ? (dto.permissions as any) : undefined,
           status: DeviceStatus.ONLINE,
           lastSeen: new Date(),
           updatedAt: new Date(),
@@ -51,6 +52,7 @@ export class DevicesService {
         androidVersion: dto.androidVersion,
         securityPatch: dto.securityPatch,
         fcmToken: dto.fcmToken,
+        permissions: dto.permissions !== undefined ? (dto.permissions as any) : undefined,
         status: DeviceStatus.ONLINE,
         lastSeen: new Date(),
       },
@@ -160,7 +162,22 @@ export class DevicesService {
 
   async update(id: string, dto: UpdateDeviceDto) {
     const device = await this.findOne(id);
-    return this.prisma.device.update({ where: { id: device.id }, data: dto });
+    const updated = await this.prisma.device.update({
+      where: { id: device.id },
+      data: {
+        ...dto,
+        permissions: dto.permissions !== undefined ? (dto.permissions as any) : undefined,
+      },
+    });
+
+    if (dto.permissions) {
+      this.eventEmitter.emit('device.permissions', {
+        deviceId: device.id,
+        permissions: dto.permissions,
+      });
+    }
+
+    return updated;
   }
 
   async updateStatus(deviceId: string, status: DeviceStatus) {

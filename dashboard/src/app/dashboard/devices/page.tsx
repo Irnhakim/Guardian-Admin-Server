@@ -86,6 +86,33 @@ export default function DevicesPage() {
                     </div>
                   </div>
 
+                  {device.permissions && (
+                    <div className="mb-3 pt-2 border-t flex flex-wrap gap-1.5" style={{ borderColor: "var(--border)" }}>
+                      {[
+                        { k: "location", label: "GPS" },
+                        { k: "usageStats", label: "Usage" },
+                        { k: "notification", label: "Notif" },
+                        { k: "notificationAccess", label: "Listener" },
+                        { k: "overlay", label: "Overlay" },
+                        { k: "deviceAdmin", label: "Admin" },
+                        { k: "accessibility", label: "A11y" },
+                      ].map((p) => {
+                        const ok = Boolean(device.permissions[p.k]);
+                        return (
+                          <span
+                            key={p.k}
+                            className={`text-[9px] px-1.5 py-0.5 rounded font-medium flex items-center gap-1 ${
+                              ok ? "bg-emerald-500/15 text-emerald-400" : "bg-zinc-800 text-zinc-500"
+                            }`}
+                          >
+                            <span className={`w-1.5 h-1.5 rounded-full ${ok ? "bg-emerald-400" : "bg-zinc-500"}`} />
+                            {p.label}
+                          </span>
+                        );
+                      })}
+                    </div>
+                  )}
+
                   <div className="flex items-center justify-between text-xs pt-3 border-t" style={{ borderColor: "var(--border)" }}>
                     <span style={{ color: "var(--text-muted)" }}>
                       {device.lastSeen ? `Aktif ${formatDistanceToNow(new Date(device.lastSeen), { addSuffix: true })}` : "Belum aktif"}

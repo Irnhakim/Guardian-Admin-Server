@@ -14,6 +14,7 @@ export declare class DevicesService {
         androidVersion: string;
         securityPatch: string | null;
         fcmToken: string | null;
+        permissions: import("@prisma/client/runtime/library").JsonValue | null;
         id: string;
         status: import("@prisma/client").$Enums.DeviceStatus;
         lastSeen: Date | null;
@@ -42,6 +43,7 @@ export declare class DevicesService {
         androidVersion: string;
         securityPatch: string | null;
         fcmToken: string | null;
+        permissions: import("@prisma/client/runtime/library").JsonValue | null;
         id: string;
         status: import("@prisma/client").$Enums.DeviceStatus;
         lastSeen: Date | null;
@@ -61,6 +63,7 @@ export declare class DevicesService {
         androidVersion: string;
         securityPatch: string | null;
         fcmToken: string | null;
+        permissions: import("@prisma/client/runtime/library").JsonValue | null;
         id: string;
         status: import("@prisma/client").$Enums.DeviceStatus;
         lastSeen: Date | null;
@@ -75,6 +78,7 @@ export declare class DevicesService {
         androidVersion: string;
         securityPatch: string | null;
         fcmToken: string | null;
+        permissions: import("@prisma/client/runtime/library").JsonValue | null;
         id: string;
         status: import("@prisma/client").$Enums.DeviceStatus;
         lastSeen: Date | null;
@@ -89,6 +93,7 @@ export declare class DevicesService {
         androidVersion: string;
         securityPatch: string | null;
         fcmToken: string | null;
+        permissions: import("@prisma/client/runtime/library").JsonValue | null;
         id: string;
         status: import("@prisma/client").$Enums.DeviceStatus;
         lastSeen: Date | null;
@@ -103,6 +108,7 @@ export declare class DevicesService {
         androidVersion: string;
         securityPatch: string | null;
         fcmToken: string | null;
+        permissions: import("@prisma/client/runtime/library").JsonValue | null;
         id: string;
         status: import("@prisma/client").$Enums.DeviceStatus;
         lastSeen: Date | null;
@@ -117,6 +123,7 @@ export declare class DevicesService {
         androidVersion: string;
         securityPatch: string | null;
         fcmToken: string | null;
+        permissions: import("@prisma/client/runtime/library").JsonValue | null;
         id: string;
         status: import("@prisma/client").$Enums.DeviceStatus;
         lastSeen: Date | null;

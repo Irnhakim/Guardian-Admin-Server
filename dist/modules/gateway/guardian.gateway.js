@@ -150,6 +150,12 @@ let GuardianGateway = GuardianGateway_1 = class GuardianGateway {
     handleDeviceDeleted(payload) {
         this.server.to(`device:${payload.deviceId}`).emit('device:deleted');
     }
+    handleDevicePermissions(payload) {
+        this.server.to('dashboard').emit('device:permissions', {
+            deviceId: payload.deviceId,
+            permissions: payload.permissions,
+        });
+    }
     handleApprovalRequested(payload) {
         this.server.to('dashboard').emit('approval:requested', {
             deviceId: payload.deviceId,
@@ -260,6 +266,12 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", void 0)
 ], GuardianGateway.prototype, "handleDeviceDeleted", null);
+__decorate([
+    (0, event_emitter_1.OnEvent)('device.permissions'),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", void 0)
+], GuardianGateway.prototype, "handleDevicePermissions", null);
 __decorate([
     (0, event_emitter_1.OnEvent)('approval.requested'),
     __metadata("design:type", Function),

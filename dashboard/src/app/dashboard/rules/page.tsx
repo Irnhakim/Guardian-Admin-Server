@@ -123,6 +123,48 @@ export default function RulesPage() {
               </button>
             </div>
           </div>
+
+          {/* Status Izin Sistem */}
+          <div className="glass-card p-5 space-y-3 md:col-span-2">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: "rgba(16,185,129,0.15)" }}>
+                <Shield size={20} style={{ color: "#10b981" }} />
+              </div>
+              <div>
+                <h3 className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>Status Izin & Hak Akses HP Anak</h3>
+                <p className="text-xs" style={{ color: "var(--text-muted)" }}>Hak akses sistem yang telah aktif di perangkat</p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 pt-2">
+              {[
+                { k: "location", label: "Lokasi (GPS)" },
+                { k: "usageStats", label: "Usage Stats" },
+                { k: "notification", label: "Notifikasi" },
+                { k: "notificationAccess", label: "Notification Listener" },
+                { k: "overlay", label: "Draw Over Other Apps" },
+                { k: "deviceAdmin", label: "Device Admin" },
+                { k: "accessibility", label: "Accessibility Watchdog" },
+              ].map((item) => {
+                const ok = Boolean(activeDevice?.permissions?.[item.k]);
+                return (
+                  <div
+                    key={item.k}
+                    className="p-2.5 rounded-lg border flex items-center justify-between"
+                    style={{ background: "var(--bg-secondary)", borderColor: "var(--border)" }}
+                  >
+                    <div>
+                      <p className="text-xs font-medium" style={{ color: "var(--text-primary)" }}>{item.label}</p>
+                      <span className="text-[10px]" style={{ color: ok ? "#10b981" : "#f59e0b" }}>
+                        {ok ? "Aktif" : "Belum Aktif"}
+                      </span>
+                    </div>
+                    <span className={`w-2 h-2 rounded-full ${ok ? "bg-emerald-400" : "bg-amber-400"}`} />
+                  </div>
+                );
+              })}
+            </div>
+          </div>
         </div>
       )}
     </div>
