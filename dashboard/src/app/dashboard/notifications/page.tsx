@@ -36,11 +36,11 @@ export default function NotificationsPage() {
   };
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="p-4 sm:p-6 space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold" style={{ color: "var(--text-primary)" }}>Riwayat Notifikasi</h1>
-          <p className="text-sm mt-0.5" style={{ color: "var(--text-muted)" }}>
+          <h1 className="text-xl sm:text-2xl font-bold" style={{ color: "var(--text-primary)" }}>Riwayat Notifikasi</h1>
+          <p className="text-xs sm:text-sm mt-0.5" style={{ color: "var(--text-muted)" }}>
             Log notifikasi pesan dan aplikasi yang diterima HP anak secara real-time
           </p>
         </div>
@@ -48,7 +48,7 @@ export default function NotificationsPage() {
         {notifications.length > 0 && (
           <button
             onClick={handleClear}
-            className="btn-danger flex items-center gap-1 text-xs py-1.5 px-3 rounded-lg border border-rose-500/30 text-rose-400 bg-rose-500/10 hover:bg-rose-500/20 cursor-pointer"
+            className="btn-danger flex items-center justify-center gap-1 text-xs py-1.5 px-3 rounded-lg border border-rose-500/30 text-rose-400 bg-rose-500/10 hover:bg-rose-500/20 cursor-pointer w-full sm:w-auto"
           >
             <Trash2 size={13} /> Hapus Riwayat
           </button>
@@ -77,29 +77,41 @@ export default function NotificationsPage() {
           </p>
         </div>
       ) : (
-        <div className="glass-card p-4 divide-y" style={{ borderColor: "var(--border)" }}>
+        <div className="glass-card overflow-hidden divide-y divide-[var(--border)]">
           {notifications.map((n: any) => (
-            <div key={n.id} className="py-3 flex items-start gap-3">
-              <div className="w-8 h-8 rounded-lg flex items-center justify-center font-bold text-xs text-white shrink-0 mt-0.5"
-                style={{ background: "var(--accent)" }}>
-                <Bell size={14} />
+            <div
+              key={n.id}
+              className="px-3.5 py-2 flex items-center gap-3 hover:bg-white/[0.02] transition-colors"
+            >
+              <div
+                className="w-7 h-7 rounded-md flex items-center justify-center shrink-0"
+                style={{ background: "rgba(92,124,250,0.15)", color: "var(--accent)" }}
+              >
+                <Bell size={13} />
               </div>
-              <div className="flex-1">
-                <div className="flex items-center justify-between">
-                  <p className="text-xs font-semibold" style={{ color: "var(--text-primary)" }}>
-                    {n.appName || n.packageName}
-                  </p>
-                  <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>
-                    {formatDistanceToNow(new Date(n.receivedAt), { addSuffix: true })}
-                  </span>
+
+              <div className="flex-1 min-w-0 flex flex-col sm:flex-row sm:items-center sm:gap-2">
+                <span className="text-xs font-semibold shrink-0" style={{ color: "var(--text-primary)" }}>
+                  {n.appName || n.packageName}
+                </span>
+
+                <div className="flex-1 min-w-0 flex items-center gap-1.5 text-xs truncate">
+                  {n.title && (
+                    <span className="font-medium truncate shrink-0 max-w-[140px] sm:max-w-[200px]" style={{ color: "var(--text-secondary)" }}>
+                      {n.title}:
+                    </span>
+                  )}
+                  {n.text && (
+                    <span className="truncate" style={{ color: "var(--text-muted)" }}>
+                      {n.text}
+                    </span>
+                  )}
                 </div>
-                {n.title && (
-                  <p className="text-xs font-medium mt-0.5" style={{ color: "var(--text-primary)" }}>{n.title}</p>
-                )}
-                {n.text && (
-                  <p className="text-xs mt-0.5" style={{ color: "var(--text-secondary)" }}>{n.text}</p>
-                )}
               </div>
+
+              <span className="text-[11px] shrink-0 tabular-nums whitespace-nowrap ml-auto" style={{ color: "var(--text-muted)" }}>
+                {formatDistanceToNow(new Date(n.receivedAt), { addSuffix: true })}
+              </span>
             </div>
           ))}
         </div>

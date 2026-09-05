@@ -14,11 +14,11 @@ export default function DevicesPage() {
   });
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="p-4 sm:p-6 space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold" style={{ color: "var(--text-primary)" }}>Devices</h1>
-          <p className="text-sm mt-0.5" style={{ color: "var(--text-muted)" }}>
+          <h1 className="text-xl sm:text-2xl font-bold" style={{ color: "var(--text-primary)" }}>Devices</h1>
+          <p className="text-xs sm:text-sm mt-0.5" style={{ color: "var(--text-muted)" }}>
             Daftar seluruh perangkat anak yang terhubung ke Guardian
           </p>
         </div>

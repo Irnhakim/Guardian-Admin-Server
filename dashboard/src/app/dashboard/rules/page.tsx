@@ -45,10 +45,10 @@ export default function RulesPage() {
   };
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-4 sm:p-6 space-y-6">
       <div>
-        <h1 className="text-2xl font-bold" style={{ color: "var(--text-primary)" }}>Aturan & Proteksi (Rules)</h1>
-        <p className="text-sm mt-0.5" style={{ color: "var(--text-muted)" }}>
+        <h1 className="text-xl sm:text-2xl font-bold" style={{ color: "var(--text-primary)" }}>Aturan & Proteksi (Rules)</h1>
+        <p className="text-xs sm:text-sm mt-0.5" style={{ color: "var(--text-muted)" }}>
           Konfigurasi pembatasan, proteksi sistem, dan kendali jarak jauh
         </p>
       </div>

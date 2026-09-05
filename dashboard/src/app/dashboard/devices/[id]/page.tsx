@@ -319,30 +319,30 @@ export default function DeviceDetailPage() {
   }
 
   return (
-    <div className="p-6 space-y-5">
+    <div className="p-4 sm:p-6 space-y-5">
       {/* Back + Header */}
       <div>
         <Link href="/dashboard" className="flex items-center gap-1 text-sm mb-4 w-fit"
           style={{ color: "var(--text-muted)" }}>
           <ChevronLeft size={15} /> Back to Overview
         </Link>
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-2xl flex items-center justify-center"
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex items-center gap-3 sm:gap-4">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl flex items-center justify-center flex-shrink-0"
               style={{ background: "rgba(92,124,250,0.15)" }}>
-              <Smartphone size={24} style={{ color: "var(--accent)" }} />
+              <Smartphone size={22} style={{ color: "var(--accent)" }} />
             </div>
             <div>
-              <h1 className="text-2xl font-bold" style={{ color: "var(--text-primary)" }}>
+              <h1 className="text-xl sm:text-2xl font-bold" style={{ color: "var(--text-primary)" }}>
                 {device.deviceName}
               </h1>
-              <div className="flex items-center gap-3 mt-0.5">
-                <span className="text-sm" style={{ color: "var(--text-muted)" }}>
+              <div className="flex flex-wrap items-center gap-2 sm:gap-3 mt-0.5">
+                <span className="text-xs sm:text-sm" style={{ color: "var(--text-muted)" }}>
                   {device.brand} {device.model}
                 </span>
                 <div className="flex items-center gap-1.5">
                   <span className={`status-dot ${isOnline ? "online" : "offline"}`} />
-                  <span className="text-sm" style={{ color: isOnline ? "var(--color-online)" : "var(--text-muted)" }}>
+                  <span className="text-xs sm:text-sm" style={{ color: isOnline ? "var(--color-online)" : "var(--text-muted)" }}>
                     {isOnline ? "Online" : device.lastSeen
                       ? `Last seen ${formatDistanceToNow(new Date(device.lastSeen), { addSuffix: true })}`
                       : "Never connected"}
@@ -354,16 +354,16 @@ export default function DeviceDetailPage() {
           <button
             onClick={() => handleForceSync("all")}
             disabled={!isOnline || isSyncing}
-            className={`btn-primary flex items-center gap-2 ${(!isOnline || isSyncing) ? 'opacity-50 cursor-not-allowed' : ''}`}
+            className={`btn-primary flex items-center justify-center gap-2 text-xs sm:text-sm py-2 px-3.5 w-full sm:w-auto ${(!isOnline || isSyncing) ? 'opacity-50 cursor-not-allowed' : ''}`}
           >
-            <RefreshCw size={16} className={isSyncing ? "animate-spin" : ""} />
+            <RefreshCw size={15} className={isSyncing ? "animate-spin" : ""} />
             {isSyncing ? "Syncing..." : "Force Sync Data"}
           </button>
         </div>
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-1 p-1 rounded-xl w-fit" style={{ background: "var(--bg-card)" }}>
+      <div className="flex gap-1 p-1 rounded-xl w-full sm:w-fit overflow-x-auto" style={{ background: "var(--bg-card)" }}>
         {tabs.map((tab) => (
           <button
             key={tab}

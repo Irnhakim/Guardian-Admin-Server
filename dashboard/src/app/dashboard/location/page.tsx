@@ -45,11 +45,11 @@ export default function LocationPage() {
   };
 
   return (
-    <div className="p-6 space-y-5">
-      <div className="flex items-center justify-between">
+    <div className="p-4 sm:p-6 space-y-5">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold" style={{ color: "var(--text-primary)" }}>Lokasi Real-time</h1>
-          <p className="text-sm mt-0.5" style={{ color: "var(--text-muted)" }}>
+          <h1 className="text-xl sm:text-2xl font-bold" style={{ color: "var(--text-primary)" }}>Lokasi Real-time</h1>
+          <p className="text-xs sm:text-sm mt-0.5" style={{ color: "var(--text-muted)" }}>
             Pantau posisi GPS dan jejak rute perangkat anak secara akurat
           </p>
         </div>
@@ -57,7 +57,7 @@ export default function LocationPage() {
           <button
             onClick={handleSyncLocation}
             disabled={activeDevice.status !== "ONLINE" || isSyncing}
-            className={`btn-primary flex items-center gap-2 text-xs py-2 px-3.5 ${
+            className={`btn-primary flex items-center justify-center gap-2 text-xs py-2 px-3.5 w-full sm:w-auto ${
               (activeDevice.status !== "ONLINE" || isSyncing) ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
             }`}
           >
