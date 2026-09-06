@@ -4,9 +4,8 @@ export declare class LocationsController {
     private locationsService;
     constructor(locationsService: LocationsService);
     log(deviceId: string, dto: LocationDto): Promise<{
-        deviceId: string;
         id: string;
-        timestamp: Date;
+        deviceId: string;
         latitude: number;
         longitude: number;
         accuracy: number | null;
@@ -14,11 +13,11 @@ export declare class LocationsController {
         speed: number | null;
         bearing: number | null;
         provider: string | null;
+        timestamp: Date;
     }>;
     getLatest(deviceId: string): Promise<{
-        deviceId: string;
         id: string;
-        timestamp: Date;
+        deviceId: string;
         latitude: number;
         longitude: number;
         accuracy: number | null;
@@ -26,11 +25,11 @@ export declare class LocationsController {
         speed: number | null;
         bearing: number | null;
         provider: string | null;
+        timestamp: Date;
     } | null>;
     getHistory(deviceId: string, limit?: number, from?: string, to?: string): Promise<{
-        deviceId: string;
         id: string;
-        timestamp: Date;
+        deviceId: string;
         latitude: number;
         longitude: number;
         accuracy: number | null;
@@ -38,5 +37,6 @@ export declare class LocationsController {
         speed: number | null;
         bearing: number | null;
         provider: string | null;
+        timestamp: Date;
     }[]>;
 }
