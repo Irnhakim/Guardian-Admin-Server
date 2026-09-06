@@ -8,7 +8,7 @@ export class LocationsService {
   constructor(
     private prisma: PrismaService,
     private eventEmitter: EventEmitter2,
-  ) {}
+  ) { }
 
   async log(deviceId: string, dto: LocationDto) {
     const device = await this.prisma.device.findUnique({ where: { deviceId } });
@@ -78,11 +78,11 @@ export class LocationsService {
         device: { OR: [{ deviceId }, { id: deviceId }] },
         ...(from || to
           ? {
-              timestamp: {
-                ...(from ? { gte: from } : {}),
-                ...(to ? { lte: to } : {}),
-              },
-            }
+            timestamp: {
+              ...(from ? { gte: from } : {}),
+              ...(to ? { lte: to } : {}),
+            },
+          }
           : {}),
       },
       orderBy: { timestamp: 'desc' },
@@ -90,3 +90,4 @@ export class LocationsService {
     });
   }
 }
+

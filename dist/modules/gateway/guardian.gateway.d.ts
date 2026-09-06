@@ -22,7 +22,7 @@ export declare class GuardianGateway implements OnGatewayConnection, OnGatewayDi
     }): {
         event: string;
         deviceId: string;
-        target: "all" | "battery" | "location" | "apps" | "usage" | "permissions";
+        target: "location" | "permissions" | "apps" | "usage" | "all" | "battery";
     };
     handleSendDeviceMessage(data: {
         deviceId: string;
