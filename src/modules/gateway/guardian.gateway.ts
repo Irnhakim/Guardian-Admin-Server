@@ -98,7 +98,7 @@ export class GuardianGateway
       return { event: 'ping_result', status: 'offline', deviceId: data.deviceId, target };
     }
 
-    const deviceSocket = this.server.sockets.sockets.get(deviceSocketId);
+    const deviceSocket = this.server.sockets.get(deviceSocketId);
     if (!deviceSocket) {
       return { event: 'ping_result', status: 'offline', deviceId: data.deviceId, target };
     }
