@@ -18,6 +18,8 @@ import { PrismaService } from '../../prisma/prisma.service';
     credentials: true,
   },
   namespace: '/guardian',
+  pingInterval: 10000,
+  pingTimeout: 15000,
 })
 export class GuardianGateway
   implements OnGatewayConnection, OnGatewayDisconnect
@@ -87,32 +89,30 @@ export class GuardianGateway
   }
 
   @SubscribeMessage('ping_device')
-  async handlePingDevice(
+  handlePingDevice(
     @MessageBody() data: { deviceId: string; target?: 'all' | 'battery' | 'location' | 'apps' | 'usage' | 'permissions' },
     @ConnectedSocket() client: Socket,
-  ) {
+  ): void {
     const target = data.target || 'all';
     const deviceSocketId = this.deviceSockets.get(data.deviceId);
 
     if (!deviceSocketId) {
-      return { event: 'ping_result', status: 'offline', deviceId: data.deviceId, target };
+      client.emit('ping_result', { status: 'offline', deviceId: data.deviceId, target });
+      return;
     }
 
-    const deviceSocket = this.server.sockets.get(deviceSocketId);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const deviceSocket: Socket | undefined = (this.server as any).sockets.get(deviceSocketId);
     if (!deviceSocket) {
-      return { event: 'ping_result', status: 'offline', deviceId: data.deviceId, target };
+      client.emit('ping_result', { status: 'offline', deviceId: data.deviceId, target });
+      return;
     }
 
     this.logger.log(`Force sync requested for device ${data.deviceId} (target: ${target})`);
 
-    return new Promise<object>((resolve) => {
-      deviceSocket.timeout(7000).emit('force_sync', { target }, (err: Error | null) => {
-        if (err) {
-          resolve({ event: 'ping_result', status: 'no_response', deviceId: data.deviceId, target });
-        } else {
-          resolve({ event: 'ping_result', status: 'ok', deviceId: data.deviceId, target });
-        }
-      });
+    deviceSocket.timeout(7000).emit('force_sync', { target }, (err: Error | null) => {
+      const status = err ? 'no_response' : 'ok';
+      client.emit('ping_result', { status, deviceId: data.deviceId, target });
     });
   }
 

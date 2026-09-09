@@ -71,26 +71,22 @@ let GuardianGateway = GuardianGateway_1 = class GuardianGateway {
         client.join(`device:${data.deviceId}`);
         return { event: 'subscribed', deviceId: data.deviceId };
     }
-    async handlePingDevice(data, client) {
+    handlePingDevice(data, client) {
         const target = data.target || 'all';
         const deviceSocketId = this.deviceSockets.get(data.deviceId);
         if (!deviceSocketId) {
-            return { event: 'ping_result', status: 'offline', deviceId: data.deviceId, target };
+            client.emit('ping_result', { status: 'offline', deviceId: data.deviceId, target });
+            return;
         }
         const deviceSocket = this.server.sockets.get(deviceSocketId);
         if (!deviceSocket) {
-            return { event: 'ping_result', status: 'offline', deviceId: data.deviceId, target };
+            client.emit('ping_result', { status: 'offline', deviceId: data.deviceId, target });
+            return;
         }
         this.logger.log(`Force sync requested for device ${data.deviceId} (target: ${target})`);
-        return new Promise((resolve) => {
-            deviceSocket.timeout(7000).emit('force_sync', { target }, (err) => {
-                if (err) {
-                    resolve({ event: 'ping_result', status: 'no_response', deviceId: data.deviceId, target });
-                }
-                else {
-                    resolve({ event: 'ping_result', status: 'ok', deviceId: data.deviceId, target });
-                }
-            });
+        deviceSocket.timeout(7000).emit('force_sync', { target }, (err) => {
+            const status = err ? 'no_response' : 'ok';
+            client.emit('ping_result', { status, deviceId: data.deviceId, target });
         });
     }
     handleSendDeviceMessage(data) {
@@ -213,7 +209,7 @@ __decorate([
     __param(1, (0, websockets_1.ConnectedSocket)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object, socket_io_1.Socket]),
-    __metadata("design:returntype", Promise)
+    __metadata("design:returntype", void 0)
 ], GuardianGateway.prototype, "handlePingDevice", null);
 __decorate([
     (0, websockets_1.SubscribeMessage)('send_device_message'),
@@ -316,6 +312,8 @@ exports.GuardianGateway = GuardianGateway = GuardianGateway_1 = __decorate([
             credentials: true,
         },
         namespace: '/guardian',
+        pingInterval: 10000,
+        pingTimeout: 15000,
     }),
     __metadata("design:paramtypes", [prisma_service_1.PrismaService])
 ], GuardianGateway);

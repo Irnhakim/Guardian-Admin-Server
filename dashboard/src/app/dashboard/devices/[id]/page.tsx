@@ -328,16 +328,21 @@ export default function DeviceDetailPage() {
       return;
     }
     setIsSyncing(true);
-    socket.timeout(8000).emit("ping_device", { deviceId: device.deviceId, target }, (err: Error | null, response: { status: string }) => {
+    const timer = setTimeout(() => {
       setIsSyncing(false);
-      if (err || response?.status === "no_response") {
-        showSyncMsg("Tidak ada respon dari perangkat", false);
-      } else if (response?.status === "offline") {
-        showSyncMsg("Perangkat offline", false);
+      showSyncMsg("Tidak ada respon dari perangkat", false);
+    }, 9000);
+    socket.once("ping_result", (res: { status: string } | null) => {
+      clearTimeout(timer);
+      setIsSyncing(false);
+      const status = res?.status;
+      if (status === "offline" || status === "no_response") {
+        showSyncMsg(status === "offline" ? "Perangkat offline" : "Tidak ada respon dari perangkat", false);
       } else {
         showSyncMsg("Perintah dikirim ke perangkat", true);
       }
     });
+    socket.emit("ping_device", { deviceId: device.deviceId, target });
   };
 
   const currentBattery = liveBattery || battery;
