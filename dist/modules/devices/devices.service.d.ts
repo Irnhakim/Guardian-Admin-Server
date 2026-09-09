@@ -7,24 +7,24 @@ export declare class DevicesService {
     private eventEmitter;
     constructor(prisma: PrismaService, eventEmitter: EventEmitter2);
     register(dto: RegisterDeviceDto): Promise<{
-        id: string;
         deviceId: string;
         deviceName: string;
         brand: string;
         model: string;
         androidVersion: string;
         securityPatch: string | null;
+        fcmToken: string | null;
+        permissions: import("@prisma/client/runtime/library").JsonValue | null;
+        id: string;
         status: import("@prisma/client").$Enums.DeviceStatus;
         lastSeen: Date | null;
         registeredAt: Date;
         updatedAt: Date;
-        fcmToken: string | null;
-        permissions: import("@prisma/client/runtime/library").JsonValue | null;
     }>;
     findAll(): Promise<({
         batteryLogs: {
-            id: string;
             deviceId: string;
+            id: string;
             timestamp: Date;
             level: number;
             isCharging: boolean;
@@ -36,19 +36,19 @@ export declare class DevicesService {
             alerts: number;
         };
     } & {
-        id: string;
         deviceId: string;
         deviceName: string;
         brand: string;
         model: string;
         androidVersion: string;
         securityPatch: string | null;
+        fcmToken: string | null;
+        permissions: import("@prisma/client/runtime/library").JsonValue | null;
+        id: string;
         status: import("@prisma/client").$Enums.DeviceStatus;
         lastSeen: Date | null;
         registeredAt: Date;
         updatedAt: Date;
-        fcmToken: string | null;
-        permissions: import("@prisma/client/runtime/library").JsonValue | null;
     })[]>;
     findOne(id: string): Promise<{
         _count: {
@@ -56,79 +56,79 @@ export declare class DevicesService {
             alerts: number;
         };
     } & {
-        id: string;
         deviceId: string;
         deviceName: string;
         brand: string;
         model: string;
         androidVersion: string;
         securityPatch: string | null;
+        fcmToken: string | null;
+        permissions: import("@prisma/client/runtime/library").JsonValue | null;
+        id: string;
         status: import("@prisma/client").$Enums.DeviceStatus;
         lastSeen: Date | null;
         registeredAt: Date;
         updatedAt: Date;
-        fcmToken: string | null;
-        permissions: import("@prisma/client/runtime/library").JsonValue | null;
     }>;
     findByDeviceId(deviceId: string): Promise<{
-        id: string;
         deviceId: string;
         deviceName: string;
         brand: string;
         model: string;
         androidVersion: string;
         securityPatch: string | null;
+        fcmToken: string | null;
+        permissions: import("@prisma/client/runtime/library").JsonValue | null;
+        id: string;
         status: import("@prisma/client").$Enums.DeviceStatus;
         lastSeen: Date | null;
         registeredAt: Date;
         updatedAt: Date;
-        fcmToken: string | null;
-        permissions: import("@prisma/client/runtime/library").JsonValue | null;
     }>;
     update(id: string, dto: UpdateDeviceDto): Promise<{
-        id: string;
         deviceId: string;
         deviceName: string;
         brand: string;
         model: string;
         androidVersion: string;
         securityPatch: string | null;
+        fcmToken: string | null;
+        permissions: import("@prisma/client/runtime/library").JsonValue | null;
+        id: string;
         status: import("@prisma/client").$Enums.DeviceStatus;
         lastSeen: Date | null;
         registeredAt: Date;
         updatedAt: Date;
-        fcmToken: string | null;
-        permissions: import("@prisma/client/runtime/library").JsonValue | null;
     }>;
     updateStatus(deviceId: string, status: DeviceStatus): Promise<{
-        id: string;
         deviceId: string;
         deviceName: string;
         brand: string;
         model: string;
         androidVersion: string;
         securityPatch: string | null;
+        fcmToken: string | null;
+        permissions: import("@prisma/client/runtime/library").JsonValue | null;
+        id: string;
         status: import("@prisma/client").$Enums.DeviceStatus;
         lastSeen: Date | null;
         registeredAt: Date;
         updatedAt: Date;
-        fcmToken: string | null;
-        permissions: import("@prisma/client/runtime/library").JsonValue | null;
     }>;
     heartbeat(deviceId: string): Promise<{
-        id: string;
         deviceId: string;
         deviceName: string;
         brand: string;
         model: string;
         androidVersion: string;
         securityPatch: string | null;
+        fcmToken: string | null;
+        permissions: import("@prisma/client/runtime/library").JsonValue | null;
+        id: string;
         status: import("@prisma/client").$Enums.DeviceStatus;
         lastSeen: Date | null;
         registeredAt: Date;
         updatedAt: Date;
-        fcmToken: string | null;
-        permissions: import("@prisma/client/runtime/library").JsonValue | null;
     }>;
     delete(id: string): Promise<{
         message: string;
@@ -138,19 +138,33 @@ export declare class DevicesService {
         title?: string;
         browser?: string;
     }): Promise<{
-        id: string;
+        title: string | null;
         deviceId: string;
         url: string;
-        title: string | null;
         browser: string | null;
+        id: string;
         visitedAt: Date;
     } | null>;
     getBrowsingHistory(deviceId: string, limit?: number): Promise<{
-        id: string;
+        title: string | null;
         deviceId: string;
         url: string;
-        title: string | null;
         browser: string | null;
+        id: string;
         visitedAt: Date;
     }[]>;
+    saveCapture(deviceId: string, dto: {
+        cameraType: string;
+        base64Image: string;
+    }): Promise<any>;
+    getCaptures(deviceId: string, limit?: number): Promise<any>;
+    clearBrowsingHistory(deviceId: string): Promise<{
+        message: string;
+    }>;
+    clearCaptures(deviceId: string): Promise<{
+        message: string;
+    }>;
+    deleteCapture(deviceId: string, captureId: string): Promise<{
+        message: string;
+    }>;
 }

@@ -41,6 +41,14 @@ export declare class GuardianGateway implements OnGatewayConnection, OnGatewayDi
         event: string;
         deviceId: string;
     };
+    handleCameraRequest(data: {
+        deviceId: string;
+        cameraType: 'FRONT' | 'BACK';
+    }): {
+        event: string;
+        deviceId: string;
+        cameraType: "FRONT" | "BACK";
+    };
     handleSetProtection(data: {
         deviceId: string;
         enabled: boolean;
@@ -63,6 +71,10 @@ export declare class GuardianGateway implements OnGatewayConnection, OnGatewayDi
         data: any;
     }): void;
     handleBrowsingCreated(payload: {
+        deviceId: string;
+        data: any;
+    }): void;
+    handleCaptureCreated(payload: {
         deviceId: string;
         data: any;
     }): void;

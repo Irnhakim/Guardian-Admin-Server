@@ -88,3 +88,15 @@ export class CreateBrowsingHistoryDto {
   @IsString()
   browser?: string;
 }
+
+export class CreateCaptureDto {
+  @ApiProperty({ example: 'FRONT' })
+  @IsString()
+  @IsNotEmpty()
+  cameraType: string;
+
+  @ApiProperty({ description: 'Base64 encoded JPEG image' })
+  @IsString()
+  @IsNotEmpty()
+  base64Image: string;
+}

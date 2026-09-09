@@ -4,8 +4,8 @@ export declare class BatteryController {
     private batteryService;
     constructor(batteryService: BatteryService);
     log(deviceId: string, dto: BatteryLogDto): Promise<{
-        id: string;
         deviceId: string;
+        id: string;
         timestamp: Date;
         level: number;
         isCharging: boolean;
@@ -13,8 +13,8 @@ export declare class BatteryController {
         voltage: number | null;
     }>;
     getLatest(deviceId: string): Promise<{
-        id: string;
         deviceId: string;
+        id: string;
         timestamp: Date;
         level: number;
         isCharging: boolean;
@@ -22,8 +22,8 @@ export declare class BatteryController {
         voltage: number | null;
     } | null>;
     getHistory(deviceId: string, limit?: number): Promise<{
-        id: string;
         deviceId: string;
+        id: string;
         timestamp: Date;
         level: number;
         isCharging: boolean;

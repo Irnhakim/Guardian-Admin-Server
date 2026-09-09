@@ -6,8 +6,8 @@ export declare class LocationsService {
     private eventEmitter;
     constructor(prisma: PrismaService, eventEmitter: EventEmitter2);
     log(deviceId: string, dto: LocationDto): Promise<{
-        id: string;
         deviceId: string;
+        id: string;
         timestamp: Date;
         latitude: number;
         longitude: number;
@@ -18,8 +18,8 @@ export declare class LocationsService {
         provider: string | null;
     }>;
     getLatest(deviceId: string): Promise<{
-        id: string;
         deviceId: string;
+        id: string;
         timestamp: Date;
         latitude: number;
         longitude: number;
@@ -30,8 +30,8 @@ export declare class LocationsService {
         provider: string | null;
     } | null>;
     getHistory(deviceId: string, limit?: number, from?: Date, to?: Date): Promise<{
-        id: string;
         deviceId: string;
+        id: string;
         timestamp: Date;
         latitude: number;
         longitude: number;

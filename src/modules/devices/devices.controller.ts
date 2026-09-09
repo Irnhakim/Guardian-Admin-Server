@@ -14,7 +14,7 @@ import {
   ApiOperation,
 } from '@nestjs/swagger';
 import { DevicesService } from './devices.service';
-import { RegisterDeviceDto, UpdateDeviceDto, CreateBrowsingHistoryDto } from './dto/device.dto';
+import { RegisterDeviceDto, UpdateDeviceDto, CreateBrowsingHistoryDto, CreateCaptureDto } from './dto/device.dto';
 
 @ApiTags('Devices')
 @Controller({ path: 'devices', version: '1' })
@@ -68,5 +68,44 @@ export class DevicesController {
   @ApiOperation({ summary: 'Get browser history for a device' })
   getBrowsing(@Param('id') id: string) {
     return this.devicesService.getBrowsingHistory(id);
+  }
+
+  @Delete(':id/browsing')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Clear browser history for a device' })
+  clearBrowsing(@Param('id') id: string) {
+    return this.devicesService.clearBrowsingHistory(id);
+  }
+
+  @Post(':deviceId/captures')
+  @ApiOperation({ summary: 'Upload camera snapshot capture from device' })
+  addCapture(
+    @Param('deviceId') deviceId: string,
+    @Body() dto: CreateCaptureDto,
+  ) {
+    return this.devicesService.saveCapture(deviceId, dto);
+  }
+
+  @Get(':id/captures')
+  @ApiOperation({ summary: 'Get camera snapshots for a device' })
+  getCaptures(@Param('id') id: string) {
+    return this.devicesService.getCaptures(id);
+  }
+
+  @Delete(':id/captures')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Clear all camera snapshots for a device' })
+  clearCaptures(@Param('id') id: string) {
+    return this.devicesService.clearCaptures(id);
+  }
+
+  @Delete(':id/captures/:captureId')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Delete a single camera snapshot' })
+  deleteCapture(
+    @Param('id') id: string,
+    @Param('captureId') captureId: string,
+  ) {
+    return this.devicesService.deleteCapture(id, captureId);
   }
 }

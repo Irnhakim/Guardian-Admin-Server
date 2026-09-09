@@ -9,7 +9,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.CreateBrowsingHistoryDto = exports.UpdateDeviceDto = exports.RegisterDeviceDto = void 0;
+exports.CreateCaptureDto = exports.CreateBrowsingHistoryDto = exports.UpdateDeviceDto = exports.RegisterDeviceDto = void 0;
 const class_validator_1 = require("class-validator");
 const swagger_1 = require("@nestjs/swagger");
 class RegisterDeviceDto {
@@ -131,4 +131,21 @@ __decorate([
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
 ], CreateBrowsingHistoryDto.prototype, "browser", void 0);
+class CreateCaptureDto {
+    cameraType;
+    base64Image;
+}
+exports.CreateCaptureDto = CreateCaptureDto;
+__decorate([
+    (0, swagger_1.ApiProperty)({ example: 'FRONT' }),
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsNotEmpty)(),
+    __metadata("design:type", String)
+], CreateCaptureDto.prototype, "cameraType", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)({ description: 'Base64 encoded JPEG image' }),
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsNotEmpty)(),
+    __metadata("design:type", String)
+], CreateCaptureDto.prototype, "base64Image", void 0);
 //# sourceMappingURL=device.dto.js.map

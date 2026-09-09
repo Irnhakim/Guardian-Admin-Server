@@ -236,4 +236,101 @@ export class DevicesService {
       take: limit,
     });
   }
+
+  async saveCapture(deviceId: string, dto: { cameraType: string; base64Image: string }) {
+    const device = await this.findByDeviceId(deviceId);
+    if (!device) return null;
+
+    const fs = await import('fs/promises');
+    const path = await import('path');
+
+    const cleanBase64 = dto.base64Image.replace(/^data:image\/\w+;base64,/, '');
+    const buffer = Buffer.from(cleanBase64, 'base64');
+    const fileName = `capture_${device.id}_${Date.now()}.jpg`;
+    const targetDir = path.join(process.cwd(), 'uploads', 'captures');
+    await fs.mkdir(targetDir, { recursive: true });
+    const fullPath = path.join(targetDir, fileName);
+    await fs.writeFile(fullPath, buffer);
+
+    const relativeUrl = `/uploads/captures/${fileName}`;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const capture = await (this.prisma as any).deviceCapture.create({
+      data: {
+        deviceId: device.id,
+        cameraType: dto.cameraType || 'BACK',
+        filePath: relativeUrl,
+      },
+    });
+
+    this.eventEmitter.emit('capture.created', { deviceId: device.id, data: capture });
+    return capture;
+  }
+
+  async getCaptures(deviceId: string, limit = 50) {
+    const device = await this.findOne(deviceId);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return (this.prisma as any).deviceCapture.findMany({
+      where: { deviceId: device.id },
+      orderBy: { capturedAt: 'desc' },
+      take: limit,
+    });
+  }
+
+  async clearBrowsingHistory(deviceId: string) {
+    const device = await this.findOne(deviceId);
+    await (this.prisma as any).browsingHistory.deleteMany({
+      where: { deviceId: device.id },
+    });
+    return { message: 'Browsing history deleted' };
+  }
+
+  async clearCaptures(deviceId: string) {
+    const device = await this.findOne(deviceId);
+    const fs = await import('fs/promises');
+    const path = await import('path');
+
+    const captures = await (this.prisma as any).deviceCapture.findMany({
+      where: { deviceId: device.id },
+    });
+
+    for (const item of captures) {
+      if (item.filePath) {
+        try {
+          const absolutePath = path.join(process.cwd(), item.filePath);
+          await fs.unlink(absolutePath);
+        } catch {
+          // Ignore missing files
+        }
+      }
+    }
+
+    await (this.prisma as any).deviceCapture.deleteMany({
+      where: { deviceId: device.id },
+    });
+    return { message: 'Captures deleted' };
+  }
+
+  async deleteCapture(deviceId: string, captureId: string) {
+    const device = await this.findOne(deviceId);
+    const fs = await import('fs/promises');
+    const path = await import('path');
+
+    const capture = await (this.prisma as any).deviceCapture.findFirst({
+      where: { id: captureId, deviceId: device.id },
+    });
+
+    if (capture?.filePath) {
+      try {
+        const absolutePath = path.join(process.cwd(), capture.filePath);
+        await fs.unlink(absolutePath);
+      } catch {
+        // Ignore missing files
+      }
+    }
+
+    await (this.prisma as any).deviceCapture.deleteMany({
+      where: { id: captureId, deviceId: device.id },
+    });
+    return { message: 'Capture deleted' };
+  }
 }

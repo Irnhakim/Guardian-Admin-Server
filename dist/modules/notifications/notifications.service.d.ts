@@ -6,9 +6,9 @@ export declare class NotificationsService {
     private eventEmitter;
     constructor(prisma: PrismaService, eventEmitter: EventEmitter2);
     log(deviceId: string, dto: CreateNotificationDto): Promise<{
-        id: string;
-        deviceId: string;
         title: string | null;
+        deviceId: string;
+        id: string;
         packageName: string;
         appName: string;
         text: string | null;
@@ -16,9 +16,9 @@ export declare class NotificationsService {
         receivedAt: Date;
     }>;
     getHistory(deviceId: string, limit?: number): Promise<{
-        id: string;
-        deviceId: string;
         title: string | null;
+        deviceId: string;
+        id: string;
         packageName: string;
         appName: string;
         text: string | null;

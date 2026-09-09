@@ -41,6 +41,7 @@ model Device {
   appUsages         AppUsage[]
   notifications     AppNotification[]
   browsingHistory   BrowsingHistory[]
+  captures          DeviceCapture[]
   rules             Rule[]
   alerts            Alert[]
   vpnLogs           VpnLog[]
@@ -178,6 +179,19 @@ model BrowsingHistory {
 
   @@index([deviceId, visitedAt])
   @@map("browsing_history")
+}
+
+model DeviceCapture {
+  id          String   @id @default(uuid())
+  deviceId    String
+  cameraType  String   // "FRONT" atau "BACK"
+  filePath    String   // Path URL file gambar
+  capturedAt  DateTime @default(now())
+
+  device Device @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+
+  @@index([deviceId, capturedAt])
+  @@map("device_captures")
 }
 
 // ============================================================

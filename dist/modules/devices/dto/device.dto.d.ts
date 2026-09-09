@@ -20,3 +20,7 @@ export declare class CreateBrowsingHistoryDto {
     title?: string;
     browser?: string;
 }
+export declare class CreateCaptureDto {
+    cameraType: string;
+    base64Image: string;
+}
