@@ -238,7 +238,13 @@ export default function DeviceDetailPage() {
   }, [notifications, selectedNotifApp, selectedNotifCategory, searchTerm]);
 
   const [isSyncing, setIsSyncing] = useState(false);
+  const [syncMessage, setSyncMessage] = useState<{ text: string; ok: boolean } | null>(null);
   const [resolvingId, setResolvingId] = useState<string | null>(null);
+
+  const showSyncMsg = (text: string, ok: boolean) => {
+    setSyncMessage({ text, ok });
+    setTimeout(() => setSyncMessage(null), 4000);
+  };
 
   const handleResolveApproval = async (approvalId: string, status: "APPROVED" | "REJECTED") => {
     try {
@@ -317,9 +323,21 @@ export default function DeviceDetailPage() {
 
   const handleForceSync = (target: "all" | "battery" | "location" | "apps" | "usage" | "permissions" = "all") => {
     if (!socket || !device) return;
+    if (!isOnline) {
+      showSyncMsg("Perangkat offline", false);
+      return;
+    }
     setIsSyncing(true);
-    socket.emit("ping_device", { deviceId: device.deviceId, target });
-    setTimeout(() => setIsSyncing(false), 2000);
+    socket.timeout(8000).emit("ping_device", { deviceId: device.deviceId, target }, (err: Error | null, response: { status: string }) => {
+      setIsSyncing(false);
+      if (err || response?.status === "no_response") {
+        showSyncMsg("Tidak ada respon dari perangkat", false);
+      } else if (response?.status === "offline") {
+        showSyncMsg("Perangkat offline", false);
+      } else {
+        showSyncMsg("Perintah dikirim ke perangkat", true);
+      }
+    });
   };
 
   const currentBattery = liveBattery || battery;
@@ -363,6 +381,14 @@ export default function DeviceDetailPage() {
           style={{ color: "var(--text-muted)" }}>
           <ChevronLeft size={15} /> Back to Overview
         </Link>
+
+        {/* Sync feedback toast */}
+        {syncMessage && (
+          <div className={`mb-3 px-4 py-2.5 rounded-xl text-sm font-medium flex items-center gap-2 ${syncMessage.ok ? "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30" : "bg-rose-500/15 text-rose-400 border border-rose-500/30"}`}>
+            {syncMessage.ok ? "✓" : "✕"} {syncMessage.text}
+          </div>
+        )}
+
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-center gap-3 sm:gap-4">
             <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl flex items-center justify-center flex-shrink-0"

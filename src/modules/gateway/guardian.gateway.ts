@@ -87,13 +87,33 @@ export class GuardianGateway
   }
 
   @SubscribeMessage('ping_device')
-  handlePingDevice(
+  async handlePingDevice(
     @MessageBody() data: { deviceId: string; target?: 'all' | 'battery' | 'location' | 'apps' | 'usage' | 'permissions' },
+    @ConnectedSocket() client: Socket,
   ) {
     const target = data.target || 'all';
+    const deviceSocketId = this.deviceSockets.get(data.deviceId);
+
+    if (!deviceSocketId) {
+      return { event: 'ping_result', status: 'offline', deviceId: data.deviceId, target };
+    }
+
+    const deviceSocket = this.server.sockets.sockets.get(deviceSocketId);
+    if (!deviceSocket) {
+      return { event: 'ping_result', status: 'offline', deviceId: data.deviceId, target };
+    }
+
     this.logger.log(`Force sync requested for device ${data.deviceId} (target: ${target})`);
-    this.server.to(`device:${data.deviceId}`).emit('force_sync', { target });
-    return { event: 'pinged', deviceId: data.deviceId, target };
+
+    return new Promise<object>((resolve) => {
+      deviceSocket.timeout(7000).emit('force_sync', { target }, (err: Error | null) => {
+        if (err) {
+          resolve({ event: 'ping_result', status: 'no_response', deviceId: data.deviceId, target });
+        } else {
+          resolve({ event: 'ping_result', status: 'ok', deviceId: data.deviceId, target });
+        }
+      });
+    });
   }
 
   @SubscribeMessage('send_device_message')
