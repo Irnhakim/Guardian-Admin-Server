@@ -15,3 +15,8 @@ export declare class UpdateDeviceDto {
     securityPatch?: string;
     permissions?: Record<string, boolean>;
 }
+export declare class CreateBrowsingHistoryDto {
+    url: string;
+    title?: string;
+    browser?: string;
+}

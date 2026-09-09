@@ -200,4 +200,40 @@ export class DevicesService {
     await this.prisma.device.delete({ where: { id: device.id } });
     return { message: 'Device removed' };
   }
+
+  async addBrowsingHistory(deviceId: string, dto: { url: string; title?: string; browser?: string }) {
+    const device = await this.findByDeviceId(deviceId);
+    if (!device) return null;
+
+    // Deduplicate: abaikan kalau URL sama persis dalam 10 detik terakhir
+    const recent = await this.prisma.browsingHistory.findFirst({
+      where: {
+        deviceId: device.id,
+        url: dto.url,
+        visitedAt: { gte: new Date(Date.now() - 10000) },
+      },
+    });
+    if (recent) return recent;
+
+    const log = await this.prisma.browsingHistory.create({
+      data: {
+        deviceId: device.id,
+        url: dto.url,
+        title: dto.title,
+        browser: dto.browser,
+      },
+    });
+
+    this.eventEmitter.emit('browsing.created', { deviceId: device.id, data: log });
+    return log;
+  }
+
+  async getBrowsingHistory(deviceId: string, limit = 100) {
+    const device = await this.findOne(deviceId);
+    return this.prisma.browsingHistory.findMany({
+      where: { deviceId: device.id },
+      orderBy: { visitedAt: 'desc' },
+      take: limit,
+    });
+  }
 }

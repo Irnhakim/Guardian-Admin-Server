@@ -71,3 +71,20 @@ export class UpdateDeviceDto {
   @IsOptional()
   permissions?: Record<string, boolean>;
 }
+
+export class CreateBrowsingHistoryDto {
+  @ApiProperty({ example: 'https://example.com' })
+  @IsString()
+  @IsNotEmpty()
+  url: string;
+
+  @ApiPropertyOptional({ example: 'Example Domain' })
+  @IsOptional()
+  @IsString()
+  title?: string;
+
+  @ApiPropertyOptional({ example: 'com.android.chrome' })
+  @IsOptional()
+  @IsString()
+  browser?: string;
+}

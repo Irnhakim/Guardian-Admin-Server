@@ -11,7 +11,7 @@ import {
   Clock, BarChart2, Shield, ChevronLeft,
   Thermometer, Navigation, RefreshCw, Bell, Trash2,
   Send, MessageSquare, Lock, Eye, EyeOff, ShieldCheck,
-  Search, Filter, Mail, Play, Layers,
+  Search, Filter, Mail, Play, Layers, Globe, ExternalLink,
 } from "lucide-react";
 import Link from "next/link";
 import { formatDistanceToNow } from "date-fns";
@@ -48,7 +48,7 @@ const formatTime = (dateStr: string) => {
   }
 };
 
-const tabs = ["Overview", "Apps", "Approvals", "Notifications", "Location", "Usage", "Security"] as const;
+const tabs = ["Overview", "Apps", "Approvals", "Notifications", "Browser", "Location", "Usage", "Security"] as const;
 type Tab = (typeof tabs)[number];
 
 export default function DeviceDetailPage() {
@@ -203,6 +203,12 @@ export default function DeviceDetailPage() {
     enabled: !!device && activeTab === "Notifications",
   });
 
+  const { data: browsingList = [], refetch: refetchBrowsing } = useQuery({
+    queryKey: ["browsing", id],
+    queryFn: () => api.get(`/devices/${id}/browsing`).then((r) => r.data),
+    enabled: !!device && activeTab === "Browser",
+  });
+
   const notifAppList = useMemo(() => {
     const set = new Set<string>();
     notifications.forEach((n: any) => {
@@ -294,6 +300,11 @@ export default function DeviceDetailPage() {
         refetchNotifications();
       }
     });
+    socket.on("browsing:new", (payload: { deviceId: string; browsing: any }) => {
+      if (payload.deviceId === targetId || payload.deviceId === hardwareId) {
+        refetchBrowsing();
+      }
+    });
     socket.on("approval:requested", (payload: { deviceId: string; data: any }) => {
       if (payload.deviceId === targetId || payload.deviceId === hardwareId) {
         refetchApprovals();
@@ -320,12 +331,13 @@ export default function DeviceDetailPage() {
       socket.off("apps:synced");
       socket.off("usage:synced");
       socket.off("notification:received");
+      socket.off("browsing:new");
       socket.off("approval:requested");
       socket.off("protection:changed");
       socket.off("device:status");
       socket.off("device:permissions");
     };
-  }, [socket, device, refetchLocation, refetchApps, refetchDevice, refetchUsage, refetchNotifications, refetchApprovals]);
+  }, [socket, device, refetchLocation, refetchApps, refetchDevice, refetchUsage, refetchNotifications, refetchApprovals, refetchBrowsing]);
 
   const handleForceSync = (target: "all" | "battery" | "location" | "apps" | "usage" | "permissions" = "all") => {
     if (!socket || !device) return;
@@ -537,6 +549,20 @@ export default function DeviceDetailPage() {
             </div>
 
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+              {/* Guardian Service status */}
+              <div
+                className="p-3 rounded-xl border flex items-center justify-between"
+                style={{ background: "var(--bg-secondary)", borderColor: "var(--border)" }}
+              >
+                <div>
+                  <p className="text-xs font-semibold" style={{ color: "var(--text-primary)" }}>Guardian Service</p>
+                  <p className="text-[10px] mt-0.5" style={{ color: isOnline ? "#10b981" : "#ef4444" }}>
+                    {isOnline ? "Aktif & Terhubung" : "Tidak Aktif / Offline"}
+                  </p>
+                </div>
+                <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${isOnline ? "bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.6)]" : "bg-rose-500"}`} />
+              </div>
+
               {[
                 { key: "location", label: "Akses Lokasi (GPS)" },
                 { key: "usageStats", label: "Statistik Penggunaan (Usage)" },
@@ -917,6 +943,85 @@ export default function DeviceDetailPage() {
                   </span>
                 </div>
               ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ── BROWSER TAB ─────────────────────────────── */}
+      {activeTab === "Browser" && (
+        <div className="glass-card p-4 sm:p-5 space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Globe size={18} style={{ color: "var(--accent)" }} />
+              <h3 className="font-semibold text-sm sm:text-base" style={{ color: "var(--text-primary)" }}>
+                Riwayat Penelusuran Browser
+              </h3>
+              <span className="text-xs px-2 py-0.5 rounded-full" style={{ background: "var(--bg-secondary)", color: "var(--text-muted)" }}>
+                {browsingList.length} kunjungan
+              </span>
+            </div>
+            <button
+              onClick={() => refetchBrowsing()}
+              className="p-1.5 rounded-lg border border-[var(--border)] hover:bg-[var(--bg-secondary)] text-slate-400 hover:text-white transition-colors"
+              title="Refresh Riwayat"
+            >
+              <RefreshCw size={14} />
+            </button>
+          </div>
+
+          <p className="text-xs text-slate-400">
+            Mendeteksi URL situs web yang dibuka pada browser Chrome, Firefox, Brave, Samsung Internet, dll melalui Accessibility Service.
+          </p>
+
+          {browsingList.length === 0 ? (
+            <div className="py-12 text-center text-xs" style={{ color: "var(--text-muted)" }}>
+              <Globe size={36} className="mx-auto mb-2 opacity-40" />
+              <p>Belum ada riwayat penelusuran yang tercatat dari perangkat ini.</p>
+              <p className="text-[11px] mt-1 text-slate-500">
+                Pastikan izin Accessibility Service aktif dan browser sedang digunakan.
+              </p>
+            </div>
+          ) : (
+            <div className="divide-y divide-[var(--border)] border border-[var(--border)] rounded-xl overflow-hidden" style={{ background: "var(--bg-secondary)" }}>
+              {browsingList.map((item: any) => {
+                const browserName = item.browser?.split('.').pop() || "browser";
+                return (
+                  <div key={item.id} className="p-3 flex items-center justify-between gap-3 hover:bg-white/[0.02] transition-colors">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 bg-blue-500/10 text-blue-400">
+                        <Globe size={16} />
+                      </div>
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2">
+                          <a
+                            href={item.url.startsWith("http") ? item.url : `https://${item.url}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-xs sm:text-sm font-medium text-blue-400 hover:underline truncate max-w-xs sm:max-w-md flex items-center gap-1"
+                          >
+                            <span className="truncate">{item.url}</span>
+                            <ExternalLink size={11} className="shrink-0" />
+                          </a>
+                        </div>
+                        <div className="flex items-center gap-2 mt-0.5">
+                          <span className="text-[10px] uppercase font-mono px-1.5 py-0.2 rounded bg-slate-800 text-slate-400">
+                            {browserName}
+                          </span>
+                          {item.title && (
+                            <span className="text-xs text-slate-400 truncate max-w-xs">
+                              {item.title}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                    <span className="text-[11px] shrink-0 tabular-nums text-slate-400">
+                      {formatDistanceToNow(new Date(item.visitedAt), { addSuffix: true })}
+                    </span>
+                  </div>
+                );
+              })}
             </div>
           )}
         </div>

@@ -40,6 +40,7 @@ model Device {
   installedApps     InstalledApp[]
   appUsages         AppUsage[]
   notifications     AppNotification[]
+  browsingHistory   BrowsingHistory[]
   rules             Rule[]
   alerts            Alert[]
   vpnLogs           VpnLog[]
@@ -163,6 +164,20 @@ model AppNotification {
   @@index([deviceId, receivedAt])
   @@index([deviceId, packageName])
   @@map("notifications")
+}
+
+model BrowsingHistory {
+  id          String   @id @default(uuid())
+  deviceId    String
+  url         String
+  title       String?
+  browser     String?
+  visitedAt   DateTime @default(now())
+
+  device Device @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+
+  @@index([deviceId, visitedAt])
+  @@map("browsing_history")
 }
 
 // ============================================================

@@ -14,7 +14,7 @@ import {
   ApiOperation,
 } from '@nestjs/swagger';
 import { DevicesService } from './devices.service';
-import { RegisterDeviceDto, UpdateDeviceDto } from './dto/device.dto';
+import { RegisterDeviceDto, UpdateDeviceDto, CreateBrowsingHistoryDto } from './dto/device.dto';
 
 @ApiTags('Devices')
 @Controller({ path: 'devices', version: '1' })
@@ -53,5 +53,20 @@ export class DevicesController {
   @ApiOperation({ summary: 'Remove device' })
   delete(@Param('id') id: string) {
     return this.devicesService.delete(id);
+  }
+
+  @Post(':deviceId/browsing')
+  @ApiOperation({ summary: 'Log browser URL visit from device' })
+  addBrowsing(
+    @Param('deviceId') deviceId: string,
+    @Body() dto: CreateBrowsingHistoryDto,
+  ) {
+    return this.devicesService.addBrowsingHistory(deviceId, dto);
+  }
+
+  @Get(':id/browsing')
+  @ApiOperation({ summary: 'Get browser history for a device' })
+  getBrowsing(@Param('id') id: string) {
+    return this.devicesService.getBrowsingHistory(id);
   }
 }

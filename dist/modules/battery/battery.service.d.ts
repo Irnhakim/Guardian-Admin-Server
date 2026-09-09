@@ -6,8 +6,8 @@ export declare class BatteryService {
     private eventEmitter;
     constructor(prisma: PrismaService, eventEmitter: EventEmitter2);
     log(deviceId: string, dto: BatteryLogDto): Promise<{
-        deviceId: string;
         id: string;
+        deviceId: string;
         timestamp: Date;
         level: number;
         isCharging: boolean;
@@ -15,8 +15,8 @@ export declare class BatteryService {
         voltage: number | null;
     }>;
     getLatest(deviceId: string): Promise<{
-        deviceId: string;
         id: string;
+        deviceId: string;
         timestamp: Date;
         level: number;
         isCharging: boolean;
@@ -24,8 +24,8 @@ export declare class BatteryService {
         voltage: number | null;
     } | null>;
     getHistory(deviceId: string, limit?: number): Promise<{
-        deviceId: string;
         id: string;
+        deviceId: string;
         timestamp: Date;
         level: number;
         isCharging: boolean;

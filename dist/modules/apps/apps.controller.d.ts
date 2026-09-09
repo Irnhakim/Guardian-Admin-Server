@@ -8,8 +8,8 @@ export declare class AppsController {
         message: string;
     }>;
     getApps(deviceId: string, includeSystem?: string): Promise<{
-        deviceId: string;
         id: string;
+        deviceId: string;
         lastSeen: Date;
         updatedAt: Date;
         isActive: boolean;
@@ -31,14 +31,14 @@ export declare class AppsController {
         totalUsageMs: number;
     }[]>;
     getDailyUsage(deviceId: string, date: string): Promise<{
-        deviceId: string;
         id: string;
+        deviceId: string;
         updatedAt: Date;
         packageName: string;
         appName: string;
+        appId: string;
         usageMs: bigint;
         date: Date;
-        appId: string;
         createdAt: Date;
     }[]>;
 }

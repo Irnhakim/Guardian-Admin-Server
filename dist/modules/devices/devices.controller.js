@@ -37,6 +37,12 @@ let DevicesController = class DevicesController {
     delete(id) {
         return this.devicesService.delete(id);
     }
+    addBrowsing(deviceId, dto) {
+        return this.devicesService.addBrowsingHistory(deviceId, dto);
+    }
+    getBrowsing(id) {
+        return this.devicesService.getBrowsingHistory(id);
+    }
 };
 exports.DevicesController = DevicesController;
 __decorate([
@@ -80,6 +86,23 @@ __decorate([
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", void 0)
 ], DevicesController.prototype, "delete", null);
+__decorate([
+    (0, common_1.Post)(':deviceId/browsing'),
+    (0, swagger_1.ApiOperation)({ summary: 'Log browser URL visit from device' }),
+    __param(0, (0, common_1.Param)('deviceId')),
+    __param(1, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, device_dto_1.CreateBrowsingHistoryDto]),
+    __metadata("design:returntype", void 0)
+], DevicesController.prototype, "addBrowsing", null);
+__decorate([
+    (0, common_1.Get)(':id/browsing'),
+    (0, swagger_1.ApiOperation)({ summary: 'Get browser history for a device' }),
+    __param(0, (0, common_1.Param)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", void 0)
+], DevicesController.prototype, "getBrowsing", null);
 exports.DevicesController = DevicesController = __decorate([
     (0, swagger_1.ApiTags)('Devices'),
     (0, common_1.Controller)({ path: 'devices', version: '1' }),

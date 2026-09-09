@@ -143,6 +143,12 @@ let GuardianGateway = GuardianGateway_1 = class GuardianGateway {
             notification: payload.data,
         });
     }
+    handleBrowsingCreated(payload) {
+        this.server.to('dashboard').emit('browsing:new', {
+            deviceId: payload.deviceId,
+            browsing: payload.data,
+        });
+    }
     handleAppsSync(payload) {
         this.server.to('dashboard').emit('apps:synced', {
             deviceId: payload.deviceId,
@@ -257,6 +263,12 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", void 0)
 ], GuardianGateway.prototype, "handleNotificationReceived", null);
+__decorate([
+    (0, event_emitter_1.OnEvent)('browsing.created'),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", void 0)
+], GuardianGateway.prototype, "handleBrowsingCreated", null);
 __decorate([
     (0, event_emitter_1.OnEvent)('apps.synced'),
     __metadata("design:type", Function),

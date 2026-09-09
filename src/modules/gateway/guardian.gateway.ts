@@ -188,6 +188,14 @@ export class GuardianGateway
     });
   }
 
+  @OnEvent('browsing.created')
+  handleBrowsingCreated(payload: { deviceId: string; data: any }) {
+    this.server.to('dashboard').emit('browsing:new', {
+      deviceId: payload.deviceId,
+      browsing: payload.data,
+    });
+  }
+
   @OnEvent('apps.synced')
   handleAppsSync(payload: { deviceId: string; count: number }) {
     this.server.to('dashboard').emit('apps:synced', {
