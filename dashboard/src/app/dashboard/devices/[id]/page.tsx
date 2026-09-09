@@ -309,6 +309,11 @@ export default function DeviceDetailPage() {
         refetchDevice();
       }
     });
+    socket.on("device:status", (payload: { deviceId: string; status: string }) => {
+      if (payload.deviceId === targetId || payload.deviceId === hardwareId) {
+        refetchDevice();
+      }
+    });
     return () => {
       socket.off("battery:update");
       socket.off("location:update");
@@ -317,6 +322,7 @@ export default function DeviceDetailPage() {
       socket.off("notification:received");
       socket.off("approval:requested");
       socket.off("protection:changed");
+      socket.off("device:status");
       socket.off("device:permissions");
     };
   }, [socket, device, refetchLocation, refetchApps, refetchDevice, refetchUsage, refetchNotifications, refetchApprovals]);
