@@ -1181,7 +1181,8 @@ export default function DeviceDetailPage() {
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
               {captureList.map((item: any) => {
-                const imgUrl = `${process.env.NEXT_PUBLIC_WS_URL || "http://localhost:3008"}${item.filePath}`;
+                const baseUrl = process.env.NEXT_PUBLIC_WS_URL || "https://api.irnhakim.my.id";
+                const imgUrl = item.filePath.startsWith("http") ? item.filePath : `${baseUrl}${item.filePath}`;
                 return (
                   <div
                     key={item.id}
